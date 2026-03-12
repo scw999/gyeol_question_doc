@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>결하다 기술명세서 v3.4 — 완전판</title>
+<style>
+:root { --primary: #1E3A5F; --accent: #C5A47E; --blue: #2563EB; --green: #059669; --code-bg: #F8FAFC; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Pretendard', -apple-system, 'Noto Sans KR', sans-serif; background: #FDFBF7; color: #1e293b; line-height: 1.7; }
+.container { max-width: 960px; margin: 0 auto; padding: 20px 24px; }
+h1 { font-size: 2rem; color: var(--primary); border-bottom: 3px solid var(--accent); padding-bottom: 12px; margin: 48px 0 20px; }
+h2 { font-size: 1.5rem; color: var(--primary); margin: 36px 0 14px; padding-left: 12px; border-left: 4px solid var(--accent); }
+h3 { font-size: 1.15rem; color: var(--blue); margin: 24px 0 10px; }
+h4 { font-size: 1rem; color: #475569; margin: 16px 0 8px; }
+p, li { font-size: 0.95rem; margin-bottom: 8px; }
+code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 0.85rem; color: #334155; }
+pre { background: var(--code-bg); border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 20px; margin: 12px 0; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; line-height: 1.6; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 0.88rem; }
+th { background: var(--primary); color: #fff; padding: 10px 12px; text-align: left; font-weight: 600; }
+td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
+tr:nth-child(even) td { background: #f9fafb; }
+.note { background: #FFF8F0; border-left: 4px solid var(--accent); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 0.9rem; }
+.note b { color: #92400E; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; margin: 2px; }
+.cover { text-align: center; padding: 80px 20px 60px; }
+.cover h1 { border: none; font-size: 2.5rem; margin-bottom: 8px; }
+.cover .sub { color: #6b7280; font-size: 1.1rem; }
+.toc { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px 30px; margin: 30px 0; }
+.toc a { color: var(--primary); text-decoration: none; display: block; padding: 4px 0; }
+.toc a:hover { color: var(--accent); }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin: 12px 0; }
+.card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; }
+.card .label { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+.card .desc { font-size: 0.82rem; color: #6b7280; line-height: 1.5; }
+.badge { display: inline-block; font-size: 0.7rem; padding: 2px 8px; border-radius: 6px; font-weight: 700; }
+.color-dot { width: 16px; height: 16px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-right: 6px; }
+@media print { body { font-size: 11pt; } .container { max-width: 100%; } }
+@media (max-width: 640px) { .card-grid { grid-template-columns: 1fr; } h1 { font-size: 1.5rem; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="cover">
+<p style="color:var(--accent);font-weight:700;letter-spacing:3px;">결하다 (Gyeolhada)</p>
+<h1 style="border:none;margin-top:8px;">파동 표현 · 매칭 타입 · 결 해석</h1>
+<h1 style="border:none;font-size:1.8rem;margin-top:0;">기술 명세서 v3.4 완전판</h1>
+<p class="sub">8축 성향 카운트 기반 결과 시각화 시스템 — 전체 디스크립션 포함</p>
+<p style="color:#9ca3b8;margin-top:20px;font-size:0.85rem;">문서 버전: v3.4 | 날짜: 2026.03.13 | 대상: 개발팀</p>
+</div>
+
+<div class="toc">
+<h3 style="margin-top:0;">📋 목차</h3>
+<a href="#sec0">0. 사전 정의: 입력 데이터 구조 (SLOT_COUNT 포함)</a>
+<a href="#sec1">1. 파동 표현 (Wave Visualization)</a>
+<a href="#sec1-1">&nbsp;&nbsp;1-1. 3축 계산 공식</a>
+<a href="#sec1-2">&nbsp;&nbsp;1-2. 파동 색상 결정</a>
+<a href="#sec1-3">&nbsp;&nbsp;1-3. Canvas 렌더링</a>
+<a href="#sec2">2. 매칭 타입 (Matching Type)</a>
+<a href="#sec2-1">&nbsp;&nbsp;2-1. 12가지 매칭 타입 전체 목록</a>
+<a href="#sec2-2">&nbsp;&nbsp;2-2. 토탈 스코어 등급 (8단계)</a>
+<a href="#sec3">3. 결 해석 (Gyeol Interpretation)</a>
+<a href="#sec3-1">&nbsp;&nbsp;3-1. 개인 프로필 생성 흐름</a>
+<a href="#sec3-2">&nbsp;&nbsp;3-2. 3축 10단계 설명 전체 (30개)</a>
+<a href="#sec3-3">&nbsp;&nbsp;3-3. 프로필 조합 × 사분면 전체 (116개)</a>
+<a href="#sec3-4">&nbsp;&nbsp;3-4. 색상 조합 설명 전체 (28개)</a>
+<a href="#sec3-5">&nbsp;&nbsp;3-5. 커플 종합 해석 5영역</a>
+<a href="#sec3-6">&nbsp;&nbsp;3-6. 파동 헤드라인 설명</a>
+<a href="#sec4">4. 부록: Big5 성향 설명 + 애착 유형 설명</a>
+<a href="#sec5">5. 부록: 솔루션 카드 전체 (36개 시나리오)</a>
+</div>
+<h1 id="sec0">0. 사전 정의: 입력 데이터 구조</h1>
+<p>이 문서의 <b>모든 시스템</b>은 설문 결과로부터 도출된 <b>8축 성향 카운트(axes)</b>를 입력으로 받습니다.</p>
+
+<h2>0-1. axes 객체</h2>
+<pre>// 각 사용자별 1개씩 생성됨
+axes = {
+  개방성: 0,    // 새로운 경험, 호기심, 창의성
+  성실성: 0,    // 계획, 책임감, 목표 달성 능력
+  외향성: 0,    // 사교성, 활동 에너지, 활력
+  우호성: 0,    // 타인 배려, 공감 능력, 협조성
+  정서안정: 0,  // 스트레스 관리, 평정심 유지
+  애착안정: 0,  // 관계에 대한 신뢰와 편안함
+  애착불안: 0,  // 사랑과 관심을 확인받고 싶음
+  애착회피: 0   // 독립적인 시간과 공간 중시
+}</pre>
+<p>각 설문 문항의 선택지에 <code>#개방성</code>, <code>#성실성</code> 등의 태그가 매핑되어 있으며, 사용자가 선택한 옵션의 태그를 축(axis)으로 변환하여 <b>1씩 카운트</b>합니다.</p>
+
+<h2>0-2. SLOT_COUNT — 이게 뭐고 왜 필요한가?</h2>
+<div class="note">
+<b>핵심 개념:</b> 24개 설문 문항 전체에서 각 축(axis)에 매핑되는 선택지의 <b>총 개수</b>가 SLOT_COUNT입니다.<br><br>
+예를 들어 <code>성실성</code>의 SLOT_COUNT가 18이라는 건, 24문항 전체를 통틀어 <code>#성실성</code>으로 매핑되는 선택지가 <b>총 18개</b> 존재한다는 뜻입니다. 한 사람이 모든 문항에서 성실성 태그가 붙은 옵션만 골랐다면 최대 18점이 나옵니다.
+</div>
+
+<p><b>왜 필요한가?</b> — 축 간 공정 비교를 위해서입니다.</p>
+<p>애착불안은 슬롯이 <b>6개</b>밖에 안 되고 성실성은 <b>18개</b>나 되므로, 단순 카운트(raw count)로 비교하면 성실성이 항상 높게 나옵니다. 그래서 <b>지배적 성향(dominantTrait)</b>을 결정할 때 <code>count / SLOT_COUNT</code>로 정규화해서 비율로 비교합니다.</p>
+
+<pre>// 정규화 예시
+norm_성실성  = axes['성실성'] / 18  →  예: 6/18 = 0.33
+norm_애착불안 = axes['애착불안'] / 6   →  예: 4/6  = 0.67
+
+// → raw count는 성실성(6)이 높지만,
+//   정규화하면 애착불안(0.67)이 지배적 성향이 됨</pre>
+
+<table>
+<tr><th>축</th><th>SLOT_COUNT</th><th>설명</th></tr><tr><td><span class="color-dot" style="background:#8B5CF6"></span><b>개방성</b></td><td><b>12</b></td><td>호기심의 색</td></tr><tr><td><span class="color-dot" style="background:#3B82F6"></span><b>성실성</b></td><td><b>18</b></td><td>신뢰의 색</td></tr><tr><td><span class="color-dot" style="background:#F97316"></span><b>외향성</b></td><td><b>10</b></td><td>활력의 색</td></tr><tr><td><span class="color-dot" style="background:#10B981"></span><b>우호성</b></td><td><b>10</b></td><td>배려의 색</td></tr><tr><td><span class="color-dot" style="background:#06B6D4"></span><b>정서안정</b></td><td><b>9</b></td><td>평온의 색</td></tr><tr><td><span class="color-dot" style="background:#6366F1"></span><b>애착안정</b></td><td><b>13</b></td><td>깊은 신뢰의 색</td></tr><tr><td><span class="color-dot" style="background:#EF4444"></span><b>애착불안</b></td><td><b>6</b></td><td>감수성의 색</td></tr><tr><td><span class="color-dot" style="background:#64748B"></span><b>애착회피</b></td><td><b>6</b></td><td>자존의 색</td></tr></table>
+
+<h2>0-3. 지배적 성향(Dominant Trait) 결정</h2>
+<pre>function getDominantTrait(axes) {
+    let maxNorm = -1, dom = '우호성';
+    for (const [trait, score] of Object.entries(axes)) {
+        const norm = score / SLOT_COUNT[trait];  // ← 정규화
+        if (norm > maxNorm) { maxNorm = norm; dom = trait; }
+    }
+    return dom;
+}</pre>
+<p>이 지배적 성향이 <b>파동 색상, 매칭 타입, 결 해석 프로필</b> 전부에 핵심 입력으로 사용됩니다.</p>
+<h1 id="sec1">1. 파동 표현 (Wave Visualization)</h1>
+<p>Canvas 위에 사인(sin) 파형을 실시간 애니메이션으로 렌더링합니다. 남녀 각각 별도 파형으로 표시되며, <b>3축(진폭/주파수/위상)</b>이 성격을 시각적으로 표현합니다.</p>
+
+<h2 id="sec1-1">1-1. 3축 계산 공식</h2>
+<h3>① 진폭 (Amplitude) — 관계 에너지 크기</h3>
+<p>파동의 높이. 높을수록 관계에 적극적이고 에너지가 강합니다.</p>
+<pre>raw = 외향성 × 1.2 + 개방성 × 0.6 + 애착안정 × 0.4 - 애착회피 × 0.8
+level = clamp(round(raw + 0), 1, 10)           // offset = 0
+pixelAmp = 8 + (level - 1) / 9 × (maxAmplitude - 8)
+// maxAmplitude = (canvasHeight / 2) - 60</pre>
+
+<h3>② 주파수 (Frequency) — 감정 리듬</h3>
+<p>파동이 얼마나 빨리 반복되는지. 높을수록 감정 변화가 빠르고 변동적입니다.</p>
+<pre>raw = 애착불안 × 1.0 + 개방성 × 0.4 - 정서안정 × 0.8 - 성실성 × 0.3
+level = clamp(round(raw + 6), 1, 10)           // offset = 6
+pixelFreq = 0.008 + (level - 1) / 9 × 0.027</pre>
+
+<h3>③ 위상 (Phase) — 리드/팔로우 역할</h3>
+<p>두 파동 간의 시간차. 차이가 클수록 한 사람이 이끌고 한 사람이 따르는 구조입니다.</p>
+<pre>raw = 외향성 × 0.8 + 애착안정 × 0.5 - 우호성 × 0.9 - 애착회피 × 0.7
+level = clamp(round(raw + 5.5), 1, 10)         // offset = 5.5
+phaseDiff = (mPhaseLevel - fPhaseLevel) × 0.3  // 남녀 위상차</pre>
+
+<h2 id="sec1-2">1-2. 파동 색상 결정</h2>
+<p>각 사용자의 <b>지배적 성향(dominantTrait)</b>에 따라 파동 색상이 결정됩니다.</p>
+<table>
+<tr><th>성향</th><th>주색</th><th>보조색</th><th>색 이름</th><th>의미</th></tr><tr><td><b>개방성</b></td><td><span class="color-dot" style="background:#8B5CF6"></span>#8B5CF6</td><td><span class="color-dot" style="background:#EDE9FE"></span>#EDE9FE</td><td>🟣 보랏빛</td><td>호기심의 색</td></tr><tr><td><b>성실성</b></td><td><span class="color-dot" style="background:#3B82F6"></span>#3B82F6</td><td><span class="color-dot" style="background:#DBEAFE"></span>#DBEAFE</td><td>🔵 푸른빛</td><td>신뢰의 색</td></tr><tr><td><b>외향성</b></td><td><span class="color-dot" style="background:#F97316"></span>#F97316</td><td><span class="color-dot" style="background:#FFEDD5"></span>#FFEDD5</td><td>🟠 주황빛</td><td>활력의 색</td></tr><tr><td><b>우호성</b></td><td><span class="color-dot" style="background:#10B981"></span>#10B981</td><td><span class="color-dot" style="background:#D1FAE5"></span>#D1FAE5</td><td>🟢 초록빛</td><td>배려의 색</td></tr><tr><td><b>정서안정</b></td><td><span class="color-dot" style="background:#06B6D4"></span>#06B6D4</td><td><span class="color-dot" style="background:#CFFAFE"></span>#CFFAFE</td><td>🩵 청록빛</td><td>평온의 색</td></tr><tr><td><b>애착안정</b></td><td><span class="color-dot" style="background:#6366F1"></span>#6366F1</td><td><span class="color-dot" style="background:#E0E7FF"></span>#E0E7FF</td><td>🔵 남빛</td><td>깊은 신뢰의 색</td></tr><tr><td><b>애착불안</b></td><td><span class="color-dot" style="background:#EF4444"></span>#EF4444</td><td><span class="color-dot" style="background:#FEE2E2"></span>#FEE2E2</td><td>🔴 붉은빛</td><td>감수성의 색</td></tr><tr><td><b>애착회피</b></td><td><span class="color-dot" style="background:#64748B"></span>#64748B</td><td><span class="color-dot" style="background:#F1F5F9"></span>#F1F5F9</td><td>⚪ 은빛</td><td>자존의 색</td></tr></table>
+
+<h2 id="sec1-3">1-3. Canvas 렌더링 의사코드</h2>
+<pre>function animate() {
+  ctx.clearRect(0, 0, width, height);
+  
+  // ① 남성 파형
+  for (x = 0 to width) {
+    y = centerY + sin(x × freqM + offset) × ampM
+  }
+  stroke: LinearGradient(보조색 → 주색 → 보조색), lineWidth=4, shadowBlur=15
+  
+  // ② 여성 파형 (위상차 적용)
+  for (x = 0 to width) {
+    y = centerY + sin(x × freqF + offset + phaseDiff) × ampF
+  }
+  stroke: LinearGradient(보조색 → 주색 → 보조색), lineWidth=4, shadowBlur=15
+  
+  offset += 0.03;  // 애니메이션 속도
+  requestAnimationFrame(animate);
+}</pre>
+<h1 id="sec2">2. 매칭 타입 (Matching Type)</h1>
+<p>남녀 두 사람의 8축 카운트를 비교하여 <b>12가지 매칭 타입 중 하나</b>를 결정합니다. 우선순위가 높은 조건부터 순차적으로 평가하여 <b>첫 번째 해당하는 타입</b>이 부여됩니다.</p>
+
+<h2 id="sec2-1">2-1. 12가지 매칭 타입 전체 목록</h2><div class="card" style="margin-bottom:12px;border-left:4px solid #6366F1;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#6366F1;font-size:1.1rem;">🪞 영혼의 데칼코마니</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 1-1</span>
+    </div>
+    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">MIRROR IMAGE</div>
+    <div style="font-size:0.88rem;margin-bottom:6px;">말하지 않아도 통하는 거울 같은 사이</div>
+    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>mDom === fDom && (애착불안 || 애착회피)</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#6366F120;color:#6366F1">#도플갱어</span> <span class="tag" style="background:#6366F120;color:#6366F1">#소울메이트</span> <span class="tag" style="background:#6366F120;color:#6366F1">#이심전심</span></div>
+    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #F97316;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#F97316;font-size:1.1rem;">🔥 열정의 스파크</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 1-2</span>
+    </div>
+    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">PASSIONATE SOULS</div>
+    <div style="font-size:0.88rem;margin-bottom:6px;">함께하면 세상이 두 배로 즐거운 열정 커플</div>
+    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>mDom === fDom && (외향성 || 정서안정)</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#F9731620;color:#F97316">#에너지폭발</span> <span class="tag" style="background:#F9731620;color:#F97316">#환상의콤비</span> <span class="tag" style="background:#F9731620;color:#F97316">#지루할틈없음</span></div>
+    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #EAB308;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#EAB308;font-size:1.1rem;">🧸 포근한 솜이불</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 1-3</span>
+    </div>
+    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">WARM EMBRACE</div>
+    <div style="font-size:0.88rem;margin-bottom:6px;">바라만 봐도 마음이 놓이는 치유의 관계</div>
+    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>mDom === fDom && (우호성 || 애착안정)</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#EAB30820;color:#EAB308">#힐링</span> <span class="tag" style="background:#EAB30820;color:#EAB308">#배려왕</span> <span class="tag" style="background:#EAB30820;color:#EAB308">#따뜻함</span></div>
+    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #059669;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#059669;font-size:1.1rem;">🌳 뿌리 깊은 나무</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 1-4</span>
+    </div>
+    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">DEEP ROOTS</div>
+    <div style="font-size:0.88rem;margin-bottom:6px;">서로에게 가장 든든한 안식처가 되어주는 관계</div>
+    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>mDom === fDom && (성실성 || 개방성)</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#05966920;color:#059669">#안정감</span> <span class="tag" style="background:#05966920;color:#059669">#신뢰</span> <span class="tag" style="background:#05966920;color:#059669">#평온함</span></div>
+    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #0EA5E9;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#0EA5E9;font-size:1.1rem;">⚓️ 정적인 닻과 돛</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 2-1</span>
+    </div>
+    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">ANCHOR & SAIL</div>
+    <div style="font-size:0.88rem;margin-bottom:6px;">나아갈 힘과 머무를 곳이 되어주는 조화</div>
+    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>외향성 + 정서안정/성실성 교차</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#0EA5E920;color:#0EA5E9">#균형</span> <span class="tag" style="background:#0EA5E920;color:#0EA5E9">#이끌어줌</span> <span class="tag" style="background:#0EA5E920;color:#0EA5E9">#받쳐줌</span></div>
+    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #3B82F6;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#3B82F6;font-size:1.1rem;">🔭 비전과 현실</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 2-2</span>
+    </div>
+    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">DREAM & REALITY</div>
+    <div style="font-size:0.88rem;margin-bottom:6px;">꿈을 꾸고 현실로 만드는 완벽한 파트너십</div>
+    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>개방성 + 성실성 교차</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#3B82F620;color:#3B82F6">#상호보완</span> <span class="tag" style="background:#3B82F620;color:#3B82F6">#최강팀워크</span> <span class="tag" style="background:#3B82F620;color:#3B82F6">#성장</span></div>
+    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #7C3AED;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#7C3AED;font-size:1.1rem;">🧲 이끄는 자와 받쳐주는 자</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 3-1</span>
+    </div>
+    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">LEAD & SUPPORT</div>
+    <div style="font-size:0.88rem;margin-bottom:6px;">한 사람이 이끌고 한 사람이 받쳐주는 완벽한 호흡</div>
+    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>phaseGap >= 4</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#7C3AED20;color:#7C3AED">#역할분담</span> <span class="tag" style="background:#7C3AED20;color:#7C3AED">#시너지</span> <span class="tag" style="background:#7C3AED20;color:#7C3AED">#자연스러움</span></div>
+    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #4B5563;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#4B5563;font-size:1.1rem;">🏰 견고한 성벽</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 3-2</span>
+    </div>
+    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">SOLID CASTLE</div>
+    <div style="font-size:0.88rem;margin-bottom:6px;">흔들림 없는 리듬으로 미래를 쌓아가는 전략가들</div>
+    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>avgFreq <= 3</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#4B556320;color:#4B5563">#철벽방어</span> <span class="tag" style="background:#4B556320;color:#4B5563">#미래지향</span> <span class="tag" style="background:#4B556320;color:#4B5563">#계획적</span></div>
+    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #EF4444;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#EF4444;font-size:1.1rem;">🎢 다이내믹 듀오</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 3-3</span>
+    </div>
+    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">DYNAMIC ADVENTURE</div>
+    <div style="font-size:0.88rem;margin-bottom:6px;">함께하면 에너지가 두 배, 매일이 새로운 커플</div>
+    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>avgAmp >= 8</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#EF444420;color:#EF4444">#모험</span> <span class="tag" style="background:#EF444420;color:#EF4444">#스릴</span> <span class="tag" style="background:#EF444420;color:#EF4444">#활력</span></div>
+    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #EC4899;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#EC4899;font-size:1.1rem;">💎 빛나는 원석</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 4-1</span>
+    </div>
+    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">SHINING GEM</div>
+    <div style="font-size:0.88rem;margin-bottom:6px;">에너지, 리듬, 역할 모두 맞아 빛나는 만남</div>
+    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>ampGap<=2 & freqGap<=2 & phaseGap<=2</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#EC489920;color:#EC4899">#삼박자</span> <span class="tag" style="background:#EC489920;color:#EC4899">#조화</span> <span class="tag" style="background:#EC489920;color:#EC4899">#찰떡궁합</span></div>
+    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #8B5CF6;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#8B5CF6;font-size:1.1rem;">🌈 다채로운 프리즘</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 FB</span>
+    </div>
+    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">COLORFUL PRISM</div>
+    <div style="font-size:0.88rem;margin-bottom:6px;">서로 다른 색이 만나 아름다운 무지개를 만듭니다</div>
+    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>Fallback (위 조건 모두 미해당)</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#8B5CF620;color:#8B5CF6">#개성</span> <span class="tag" style="background:#8B5CF620;color:#8B5CF6">#존중</span> <span class="tag" style="background:#8B5CF620;color:#8B5CF6">#새로움</span></div>
+    </div>
+<div class="note"><b>구현 포인트:</b> 조건 평가는 반드시 위에서 아래로 순차적으로 수행. 첫 번째 true가 되는 조건이 최종 매칭 타입입니다. <code>if-else if</code> 체인으로 구현하면 됩니다.</div>
+
+<h2 id="sec2-2">2-2. 토탈 스코어 등급 (8단계)</h2>
+<table>
+<tr><th>최소 점수</th><th>등급</th><th>설명</th></tr><tr><td><b>90점</b></td><td>💎 운명적 공명</td><td>두 파동이 완벽하게 겹쳐 하나처럼 울립니다</td></tr><tr><td><b>80점</b></td><td>✨ 깊은 교감</td><td>많은 부분에서 깊이 통하는 자연스러운 공명입니다</td></tr><tr><td><b>70점</b></td><td>🔥 자연스러운 조화</td><td>함께 있을 때 편안함이 느껴지는 궁합입니다</td></tr><tr><td><b>60점</b></td><td>🌊 좋은 흐름</td><td>서로를 보완하며 좋은 시너지를 만들어냅니다</td></tr><tr><td><b>50점</b></td><td>🌿 성장하는 관계</td><td>대화와 이해로 더 깊어질 잠재력이 있습니다</td></tr><tr><td><b>40점</b></td><td>🌀 탐색적 만남</td><td>서로 다른 점을 발견하는 새로운 만남입니다</td></tr><tr><td><b>25점</b></td><td>🔮 다양성의 매력</td><td>다른 리듬이 만드는 새로운 가능성의 만남입니다</td></tr><tr><td><b>0점</b></td><td>⚡ 도전적 여정</td><td>서로 다른 세계를 가진 특별한 만남입니다</td></tr></table><h1 id="sec3">3. 결 해석 (Gyeol Interpretation)</h1>
+<p>각 개인의 성격 프로필 + 커플 종합 해석을 텍스트로 생성합니다.</p>
+
+<h2 id="sec3-1">3-1. 개인 프로필 생성 흐름</h2>
+<pre>Step 1) 모든 8축을 정규화(count / SLOT_COUNT)하여 내림차순 정렬 → top1, top2 결정
+Step 2) 3축 레벨(진폭/주파수/위상) 계산 → 사분면(Quadrant) 결정
+        - ampLevel >= 6 → 에너지높음(H), < 6 → 낮음(L)
+        - freqLevel <= 5 → 안정적(H),   > 5 → 변동적(L)
+        - 조합: HH / HL / LH / LL
+Step 3) profiles[top1+top2][quad] → 프로필 한 줄 설명
+Step 4) 3축 레벨별 10단계 설명 + 색상 해석 조합</pre>
+
+<table>
+<tr><th>사분면</th><th>조건</th><th>의미</th><th>이모지</th></tr>
+<tr><td><b>HH</b></td><td>에너지높음 + 안정적</td><td>적극적이면서도 안정적인 사람</td><td>⚡</td></tr>
+<tr><td><b>HL</b></td><td>에너지높음 + 변동적</td><td>에너지가 높고 감정도 풍부한 사람</td><td>🔥</td></tr>
+<tr><td><b>LH</b></td><td>에너지낮음 + 안정적</td><td>차분하고 한결같은 사람</td><td>🌿</td></tr>
+<tr><td><b>LL</b></td><td>에너지낮음 + 변동적</td><td>조용하지만 내면이 깊은 사람</td><td>🌙</td></tr>
+</table>
+
+<h2 id="sec3-2">3-2. 3축 10단계 설명 전체 (30개)</h2>
+<h3>⛰️ 진폭 (관계 에너지) — 1~10</h3>
+<table><tr><th>Lv</th><th>설명</th></tr><tr><td><b>1</b></td><td>관계에서 매우 조용한 편이에요. 가까운 사이에서도 표현보다 마음속에 담아두는 타입이에요.</td></tr><tr><td><b>2</b></td><td>표현이 적지만 진심이 담긴 사람이에요. 소수의 사람에게만 마음을 열어요.</td></tr><tr><td><b>3</b></td><td>차분하게 관계를 유지해요. 조용하지만 함께 있으면 편안한 안정감이 느껴져요.</td></tr><tr><td><b>4</b></td><td>부드럽고 온화한 에너지예요. 상대방 페이스에 맞춰주며 편안한 분위기를 만들어요.</td></tr><tr><td><b>5</b></td><td>상황에 따라 적극적이기도, 조용하기도 해요. 관계에서 유연하게 에너지를 조절해요.</td></tr><tr><td><b>6</b></td><td>관계에 따뜻한 에너지를 불어넣어요. 함께 있으면 기분이 좋아지는 사람이에요.</td></tr><tr><td><b>7</b></td><td>관계에 적극적으로 참여해요. 먼저 연락하고, 만남을 즐기는 행동력이 있어요.</td></tr><tr><td><b>8</b></td><td>넘치는 에너지로 주변을 밝혀요. 함께 있으면 활력이 전해지는 사람이에요.</td></tr><tr><td><b>9</b></td><td>관계에 온 마음을 쏟는 사람이에요. 사랑하는 사람에게 아낌없이 에너지를 줘요.</td></tr><tr><td><b>10</b></td><td>최고 수준의 관계 에너지예요. 강렬한 애정 표현과 적극적인 참여가 특징이에요.</td></tr></table>
+
+<h3>🎵 주파수 (감정 리듬) — 1~10</h3>
+<table><tr><th>Lv</th><th>설명</th></tr><tr><td><b>1</b></td><td>감정이 거의 흔들리지 않아요. 언제 만나도 한결같은 모습이에요.</td></tr><tr><td><b>2</b></td><td>감정 기복이 적고 꾸준해요. 약속과 계획을 잘 지키는 믿음직한 사람이에요.</td></tr><tr><td><b>3</b></td><td>대체로 안정적이에요. 가끔 감정이 드러나지만 빠르게 평정심을 찾아요.</td></tr><tr><td><b>4</b></td><td>일관된 태도를 유지하면서도 필요할 때 유연하게 반응해요.</td></tr><tr><td><b>5</b></td><td>안정과 변화 사이에서 균형을 잡아요. 상황에 따라 다른 모습을 보여요.</td></tr><tr><td><b>6</b></td><td>변화에 잘 적응하고 다양한 반응을 보여요. 같은 상황에서도 다른 매력을 발견할 수 있어요.</td></tr><tr><td><b>7</b></td><td>감정 표현이 다채로워요. 기쁨도 슬픔도 깊이 느끼고 솔직하게 드러내요.</td></tr><tr><td><b>8</b></td><td>작은 변화에도 감정이 움직여요. 섬세한 감각으로 상대방의 기분을 잘 알아채요.</td></tr><tr><td><b>9</b></td><td>감정의 파도가 크고 빈번해요. 예측하기 어렵지만 그만큼 다양한 매력이 있어요.</td></tr><tr><td><b>10</b></td><td>감정과 행동이 자유분방해요. 매 순간 새로운 모습을 보여주는 예측 불가의 매력.</td></tr></table>
+
+<h3>🤝 위상 (리드/팔로우) — 1~10</h3>
+<table><tr><th>Lv</th><th>설명</th></tr><tr><td><b>1</b></td><td>상대방에게 완전히 맞추는 스타일이에요. 상대의 리드를 기다리며 조용히 따라가요.</td></tr><tr><td><b>2</b></td><td>상대의 리듬에 자연스럽게 맞춰요. 요청이 있을 때 응하는 편안한 반응형이에요.</td></tr><tr><td><b>3</b></td><td>상대를 먼저 배려하고 반응을 살핀 후에 움직여요. 관계의 조율자 역할이에요.</td></tr><tr><td><b>4</b></td><td>상대와 보조를 맞추되, 가끔은 먼저 제안도 해요. 부드러운 균형감이 있어요.</td></tr><tr><td><b>5</b></td><td>상황에 따라 리드하기도, 따라가기도 해요. 역할에 유연한 사람이에요.</td></tr><tr><td><b>6</b></td><td>먼저 움직이는 편이지만 상대 반응을 보며 속도를 조절해요.</td></tr><tr><td><b>7</b></td><td>대화를 먼저 시작하고, 만남을 제안하는 적극적인 스타일이에요.</td></tr><tr><td><b>8</b></td><td>관계의 방향을 이끌어가는 사람이에요. 계획하고 실행하는 데 자신감이 있어요.</td></tr><tr><td><b>9</b></td><td>먼저 다가가고, 분위기를 만들고, 관계를 주도하는 에너지가 강해요.</td></tr><tr><td><b>10</b></td><td>모든 관계에서 선두에 서는 타입이에요. 주도적이고 결단력 있게 이끌어가요.</td></tr></table>
+
+<h2 id="sec3-3">3-3. 프로필 조합 × 사분면 전체 (116개)</h2>
+<p>top1+top2의 조합키로 <code>profiles[조합키][quad]</code>에서 매칭되는 한 줄 설명을 가져옵니다.</p>
+<p>총 <b>29개 성향 조합 × 4사분면 = 116개</b> 프로필 변형이 존재합니다.</p>
+<h4>개방성+외향성 — "호기심 넘치는 모험가"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>새로운 도전을 즐기면서도 자기 페이스를 지키는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>호기심 가는 곳이면 어디든 달려가는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>차분하게 관찰하면서 새로운 걸 찾아내는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>조용히 자기만의 새로운 세계를 상상하는 사람</td></tr>
+    </table><h4>개방성+성실성 — "계획적인 도전가"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>에너지도 넘치고 계획도 철저한 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>아이디어가 떠오르면 바로 시도해보는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>차근차근 준비해서 확실하게 해내는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>신중하게 한 걸음씩 새로운 길을 여는 사람</td></tr>
+    </table><h4>개방성+우호성 — "공감 잘하는 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>누구의 이야기든 적극적으로 들어주고 안정감을 주는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>편견 없이 다양한 사람과 어울리는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>조용하지만 깊이 있게 공감해주는 든든한 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>말은 적지만 누구보다 잘 들어주는 사람</td></tr>
+    </table><h4>개방성+정서안정 — "생각이 깊은 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>적극적으로 탐구하면서도 흔들리지 않는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>거침없이 넓은 세계를 탐험하는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>차분하게 깊이 생각하며 답을 찾는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>고요한 내면에서 깊은 사색을 즐기는 사람</td></tr>
+    </table><h4>개방성+애착안정 — "여유로운 도전가"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>든든한 마음으로 적극적인 도전을 즐기는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>자유롭게 이것저것 시도해보는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>안정감 속에서 조용히 새로운 걸 시도하는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>편안한 마음으로 천천히 세상을 관찰하는 사람</td></tr>
+    </table><h4>개방성+애착불안 — "감성이 풍부한 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>감정도 풍부하고 행동력도 있으면서 꾸준한 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>감성적이고 세상을 온몸으로 느끼는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>차분하지만 내면엔 풍부한 감성이 있는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>섬세한 감각으로 작은 변화도 알아채는 사람</td></tr>
+    </table><h4>개방성+애착회피 — "자기 세계가 있는 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>활발하면서도 자기만의 방식을 고수하는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>자기만의 독특한 방식으로 세상을 탐구하는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>조용히 깊이 파고들며 자기 분야를 넓히는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>혼자만의 시간에서 영감을 얻는 사람</td></tr>
+    </table><h4>성실성+외향성 — "행동파 실천가"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>에너지도 넘치고 계획도 철저해서 뭐든 해내는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>목표가 생기면 곧바로 달려가는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>묵묵히 한 걸음씩 확실하게 목표를 이루는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>조용하지만 자기 속도로 꾸준히 해내는 사람</td></tr>
+    </table><h4>성실성+우호성 — "행동으로 챙기는 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>활발하게 움직이면서 주변을 든든히 챙기는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>말보다 행동으로 먼저 다가가는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>조용히 옆에서 꾸준하게 챙겨주는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>말은 적지만 가장 든든한 존재인 사람</td></tr>
+    </table><h4>성실성+정서안정 — "흔들리지 않는 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>에너지도 넘치고 어떤 상황에서도 흔들리지 않는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>적극적이면서도 감정에 휘둘리지 않는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>차분하고 꾸준하게 자기 자리를 지키는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>조용하지만 내면이 가장 단단한 사람</td></tr>
+    </table><h4>성실성+애착안정 — "약속을 지키는 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>적극적이면서 약속은 반드시 지키는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>에너지 넘치지만 신뢰감이 높은 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>계획적이고 한결같아서 믿을 수 있는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>말이 적지만 한 번 한 약속은 꼭 지키는 사람</td></tr>
+    </table><h4>성실성+애착불안 — "꼼꼼하게 챙기는 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>적극적으로 움직이면서 세세한 부분까지 챙기는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>최선을 다해 빈틈없이 준비하는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>조용하지만 하나하나 꼼꼼하게 확인하는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>작은 부분까지 놓치지 않는 세심한 사람</td></tr>
+    </table><h4>성실성+애착회피 — "스스로 해내는 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>활발하면서도 자기 일은 스스로 처리하는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>독립적으로 계획하고 추진하는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>자기 페이스대로 묵묵히 해나가는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>조용히 자기 길을 걸어가는 사람</td></tr>
+    </table><h4>애착안정+외향성 — "편안하게 다가가는 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>활발하면서도 함께 있으면 마음이 편안한 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>누구와도 금방 친해지는 사교적인 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>차분하지만 함께 있으면 포근한 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>조용하지만 옆에 있으면 편안해지는 사람</td></tr>
+    </table><h4>애착불안+외향성 — "솔직하게 표현하는 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>감정 표현이 풍부하면서도 안정감이 있는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>좋으면 좋다고 솔직하게 말하는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>차분하지만 진심을 가감 없이 전하는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>말은 적지만 표정에 진심이 묻어나는 사람</td></tr>
+    </table><h4>애착회피+외향성 — "자유롭게 활동하는 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>활발하면서도 혼자만의 시간을 소중히 여기는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>사교적이지만 자기 영역은 확실히 지키는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>필요할 때 나서고 평소엔 여유를 즐기는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>자유로운 리듬으로 자기 방식대로 사는 사람</td></tr>
+    </table><h4>외향성+우호성 — "분위기를 밝히는 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>활기차면서도 주변을 안정감 있게 챙기는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>함께 있으면 절로 웃음이 나는 에너지 넘치는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>은근한 유머로 분위기를 편안하게 만드는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>조용하지만 함께하면 기분이 좋아지는 사람</td></tr>
+    </table><h4>외향성+정서안정 — "든든한 에너자이저"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>에너지도 넘치고 마음도 든든한 만능 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>활발하면서도 주변을 안심시키는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>차분하지만 은근한 활력을 주는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>조용한 속에 단단한 에너지가 있는 사람</td></tr>
+    </table><h4>우호성+정서안정 — "마음을 편하게 해주는 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>적극적으로 다가가면서도 마음을 편하게 해주는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>활발하게 갈등을 풀어주는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>곁에 있으면 마음이 차분해지는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>조용히 옆에 있는 것만으로 평화로운 사람</td></tr>
+    </table><h4>애착안정+우호성 — "함께 있으면 편안한 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>활발하면서도 상대를 포근하게 감싸는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>적극적으로 상대를 챙기는 따뜻한 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>조용하지만 옆에 있으면 마음이 놓이는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>곁에 있는 것만으로 안심이 되는 사람</td></tr>
+    </table><h4>애착불안+우호성 — "세심하게 챙기는 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>적극적으로 움직이면서 세심하게 배려하는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>사소한 것까지 챙기는 다정하고 세심한 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>조용하지만 상대의 기분을 먼저 살피는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>말은 적지만 가장 먼저 걱정해주는 사람</td></tr>
+    </table><h4>애착회피+우호성 — "조용히 챙기는 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>적절한 거리에서 활발하게 배려하는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>거리를 두면서도 세심하게 배려하는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>조용히 지켜보면서 필요할 때 챙겨주는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>말 없이도 은근히 신경 써주는 사람</td></tr>
+    </table><h4>애착안정+정서안정 — "어떤 일에도 흔들리지 않는 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>적극적이면서도 어떤 상황에서도 안정적인 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>에너지 넘치지만 내면이 단단한 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>함께 있으면 마음이 차분해지는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>아무 말 없이도 안심이 되는 사람</td></tr>
+    </table><h4>애착불안+정서안정 — "속마음이 깊은 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>겉은 활발하지만 내면엔 깊은 감성이 있는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>겉은 차분하지만 속은 따뜻한 감성의 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>차분한 모습 속에 섬세한 마음이 있는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>조용하지만 깊은 감정을 품고 있는 사람</td></tr>
+    </table><h4>애착회피+정서안정 — "쿨하고 현실적인 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>활발하면서도 감정에 휘둘리지 않는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>자기 길을 거침없이 가는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>담담하게 자기 리듬을 유지하는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>조용히 자기 자리를 지키는 사람</td></tr>
+    </table><h4>애착불안+애착안정 — "점점 단단해지는 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>감정이 풍부하면서도 안정을 찾아가는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>열정적이면서 점점 균형을 잡아가는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>차분하게 내면을 다잡으며 성장하는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>조용히 자기 속도로 단단해지는 사람</td></tr>
+    </table><h4>애착안정+애착회피 — "천천히 마음 여는 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>활발하지만 신뢰가 쌓여야 마음을 여는 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>사교적이지만 마음은 천천히 여는 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>조용히 자기 속도로 관계를 쌓아가는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>천천히 신뢰를 쌓으며 마음의 문을 여는 사람</td></tr>
+    </table><h4>애착불안+애착회피 — "내면이 깊은 사람"</h4>
+    <table><tr><th style="width:60px;">사분면</th><th>설명</th></tr>
+    <tr><td><b>HH</b> ⚡</td><td>에너지 넘치지만 내면은 복잡하고 깊은 사람</td></tr>
+    <tr><td><b>HL</b> 🔥</td><td>감정이 풍부하고 내면이 깊은 사람</td></tr>
+    <tr><td><b>LH</b> 🌿</td><td>겉은 차분하지만 안에 여러 감정이 있는 사람</td></tr>
+    <tr><td><b>LL</b> 🌙</td><td>조용하지만 내면에 많은 이야기가 있는 사람</td></tr>
+    </table><h2 id="sec3-4">3-4. 색상 조합 설명 전체 (28개)</h2>
+<p>남녀 지배 성향의 조합에 따른 시적인 설명 문구입니다.</p>
+<table><tr><th>조합 키</th><th>설명 문구</th></tr><tr><td><code>개방성+외향성</code></td><td>에너지와 호기심이 폭발하듯 뻗어나가는</td></tr><tr><td><code>개방성+성실성</code></td><td>꿈과 현실이 균형을 이루며 나아가는</td></tr><tr><td><code>개방성+우호성</code></td><td>열린 마음이 부드럽게 감싸 안는</td></tr><tr><td><code>개방성+정서안정</code></td><td>흔들림 없이 새로운 깊이를 탐색하는</td></tr><tr><td><code>개방성+애착안정</code></td><td>안정 속에서 자유롭게 탐색하는</td></tr><tr><td><code>개방성+애착불안</code></td><td>감수성이 호기심을 타고 번지는</td></tr><tr><td><code>개방성+애착회피</code></td><td>독자적 세계를 탐구하며 울리는</td></tr><tr><td><code>성실성+외향성</code></td><td>추진력에 전략이 더해져 힘차게 나아가는</td></tr><tr><td><code>성실성+우호성</code></td><td>성실한 배려가 묵직하게 흐르는</td></tr><tr><td><code>성실성+정서안정</code></td><td>반석처럼 단단하고 흔들림 없는</td></tr><tr><td><code>성실성+애착안정</code></td><td>깊은 신뢰 위에 계획이 쌓이는</td></tr><tr><td><code>성실성+애착불안</code></td><td>완벽을 향한 긴장감이 팽팽한</td></tr><tr><td><code>성실성+애착회피</code></td><td>독립적 추진력이 규칙적으로 나아가는</td></tr><tr><td><code>외향성+우호성</code></td><td>활력이 배려를 만나 따뜻하게 퍼지는</td></tr><tr><td><code>외향성+정서안정</code></td><td>안정된 에너지를 밝게 발산하는</td></tr><tr><td><code>애착안정+외향성</code></td><td>든든한 에너지가 밝게 퍼지는</td></tr><tr><td><code>애착불안+외향성</code></td><td>뜨겁고 강렬한 감정이 요동치는</td></tr><tr><td><code>애착회피+외향성</code></td><td>넓게 퍼지면서도 중심을 지키는</td></tr><tr><td><code>우호성+정서안정</code></td><td>갈등을 녹이며 고요하게 흐르는</td></tr><tr><td><code>애착안정+우호성</code></td><td>따뜻하게 감싸는 포근한</td></tr><tr><td><code>애착불안+우호성</code></td><td>사랑이 넘쳐 섬세하게 떨리는</td></tr><tr><td><code>애착회피+우호성</code></td><td>거리를 두면서 은은히 배려하는</td></tr><tr><td><code>애착안정+정서안정</code></td><td>어떤 바람에도 흔들리지 않는</td></tr><tr><td><code>애착불안+정서안정</code></td><td>겉은 고요하나 속은 깊은</td></tr><tr><td><code>애착회피+정서안정</code></td><td>초연하고 일정한 간격을 유지하는</td></tr><tr><td><code>애착불안+애착안정</code></td><td>안정을 향해 조금씩 잔잔해지는</td></tr><tr><td><code>애착안정+애착회피</code></td><td>열림과 닫힘이 번갈아 흐르는</td></tr><tr><td><code>애착불안+애착회피</code></td><td>다가감과 물러남이 교차하는</td></tr></table>
+
+<h2 id="sec3-5">3-5. 커플 종합 해석 5영역</h2>
+<p>남녀 두 사람의 3축 레벨을 비교하여 5가지 영역에 대한 해석을 생성합니다.</p>
+<table>
+<tr><th>영역</th><th>비교 기준</th><th>분기 로직 (간략)</th></tr>
+<tr><td><b>⛰️ 관계 에너지 비교</b></td><td>ampGap, avgAmp</td><td>gap≤2: 비슷한 에너지 / gap≤4: 한쪽이 더 적극적 / gap>4: 큰 차이</td></tr>
+<tr><td><b>🎵 감정 리듬 비교</b></td><td>freqGap, avgFreq</td><td>gap≤2: 비슷한 리듬 / gap≤4: 한쪽이 닻 역할 / gap>4: 리듬차 크다</td></tr>
+<tr><td><b>🤝 리드/팔로우 비교</b></td><td>phaseGap, avgPhase</td><td>gap≤2: 비슷한 역할 / gap≤4: 자연스러운 분담 / gap>4: 주도권 차이</td></tr>
+<tr><td><b>💛 애착 유형 비교</b></td><td>attachCombo</td><td>안정-안정 / 불안-안정 / 회피-안정 / 불안-회피 / 동일형 등 6조합</td></tr>
+<tr><td><b>🎨 성향 색상 비교</b></td><td>sameColor, comboDesc</td><td>같은 색상: 공감 빠름 언급 / 다른 색상: colorComboDesc 테이블에서 조합 설명 조회</td></tr>
+</table>
+
+<h2 id="sec3-6">3-6. 파동 헤드라인 설명 (getWaveDescription)</h2>
+<p>결과 화면 상단에 표시되는 한 줄 시적 문구입니다.</p>
+<table>
+<tr><th>조건</th><th>예시 출력</th></tr>
+<tr><td>점수≥70 & 에너지 높음</td><td>"두 분의 파장은 <b style="color:#F59E0B">열정적인 공명(Resonance)</b>을 일으키고 있습니다"</td></tr>
+<tr><td>점수≥70 & 안정 높음</td><td>"두 분의 리듬은 <b style="color:#3B82F6">고요한 호수처럼 평온한 동기화</b>를 이룹니다"</td></tr>
+<tr><td>점수≥70 & 기타</td><td>"두 분의 파장은 <b style="color:#E11D48">하나의 아름다운 선율</b>처럼 흐르고 있습니다"</td></tr>
+<tr><td>점수<70 & 같은 색상 & 에너지 높음</td><td>"비슷한 불꽃이 만나 <b style="color:#F59E0B">더 크고 뜨거운 에너지</b>를 만듭니다"</td></tr>
+<tr><td>점수<70 & 같은 색상 & 에너지 낮음</td><td>"비슷한 결을 가진 두 분은 <b style="color:#3B82F6">깊은 공감대</b>를 형성합니다"</td></tr>
+<tr><td>점수<70 & 다른 색상 & 에너지 높음</td><td>"서로 다른 강렬한 색채가 만나 <b style="color:#F59E0B">화려한 불꽃</b>을 만들어냅니다"</td></tr>
+<tr><td>점수<70 & 다른 색상 & 에너지 낮음</td><td>"서로 다른 리듬이 어우러져 <b style="color:#8B5CF6">다채로운 변주곡</b>을 연주합니다"</td></tr>
+</table>
+<h1 id="sec4">4. 부록: Big5 성향 설명 + 애착 유형 설명</h1>
+
+<h2>4-1. Big5 성향별 설명 (순위 기반)</h2>
+<p>각 사용자의 Big5 점수를 높은 순으로 정렬하여 Top 3를 표시합니다. 1순위(dominant)와 2~3순위(supportive)에 따라 다른 설명이 출력됩니다.</p>
+
+<table>
+<tr><th>성향</th><th>유형</th><th>레이블</th><th>설명</th></tr>
+<tr><td rowspan="2"><b>개방성</b></td><td>1순위</td><td>🔭 혁신적인 탐험가</td><td>귀하를 대표하는 키워드는 '통찰'과 '혁신'. 남들이 보지 못하는 가능성을 발견하고, 새로운 경험을 통해 끊임없이 성장하려는 욕구가 매우 강합니다.</td></tr>
+<tr><td>2~3순위</td><td>✨ 유연한 수용가</td><td>열린 사고방식을 가지고 있어 변화에 유연하게 대처합니다. 당신의 다른 강점들에 창의적인 색채를 더해주는 역할을 합니다.</td></tr>
+<tr><td rowspan="2"><b>성실성</b></td><td>1순위</td><td>📅 목표 지향적 설계자</td><td>귀하의 가장 큰 무기는 '철저함'. 삶의 불확실성을 계획으로 통제하며, 높은 책임감으로 목표를 반드시 달성해내는 성취가입니다.</td></tr>
+<tr><td>2~3순위</td><td>🏃 신뢰할 수 있는 실행가</td><td>성실함이 귀하의 기반을 단단하게 받쳐줍니다. 맡은 바 책임을 다하는 꾸준함으로 파트너에게 깊은 신뢰와 안정감을 줍니다.</td></tr>
+<tr><td rowspan="2"><b>외향성</b></td><td>1순위</td><td>🗣️ 관계 지향적 리더</td><td>외부 세계와의 상호작용에서 에너지를 얻는 타입. 적극적인 태도로 관계를 주도하며, 타인에게 긍정적인 활력을 불어넣는 중심인물입니다.</td></tr>
+<tr><td>2~3순위</td><td>☀️ 활력 있는 사교가</td><td>적당한 사교성을 갖추어 원만한 대인 관계를 형성합니다. 상황에 따라 에너지를 발산하며 분위기를 밝게 만드는 윤활유 역할을 합니다.</td></tr>
+<tr><td rowspan="2"><b>우호성</b></td><td>1순위</td><td>🤝 이타적인 조력자</td><td>타인에 대한 깊은 이해와 배려심이 핵심. 자신의 이익보다 공동체의 조화와 파트너의 행복을 우선시하는 따뜻한 성품을 지녔습니다.</td></tr>
+<tr><td>2~3순위</td><td>🕊️ 온화한 중재자</td><td>공감 능력이 뛰어나 타인의 감정을 잘 읽습니다. 갈등 상황에서도 부드러운 태도로 관계의 균형을 맞추는 능력이 탁월합니다.</td></tr>
+<tr><td rowspan="2"><b>정서안정</b></td><td>1순위</td><td>⚓️ 흔들림 없는 중심</td><td>스트레스 내성이 매우 높고 감정 기복이 적습니다. 어떤 위기 상황에서도 이성적이고 침착하게 대처하여 주변에 강력한 심리적 안정을 제공합니다.</td></tr>
+<tr><td>2~3순위</td><td>🌊 평온한 유지자</td><td>쉽게 예민해지지 않는 무던한 성격. 이 성향 덕분에 관계에서 불필요한 감정 소모를 줄이고 편안함을 유지할 수 있습니다.</td></tr>
+</table>
+
+<h2>4-2. 애착 유형별 설명 (강도 기반)</h2>
+<p>애착 3축 중 가장 높은 점수의 축이 지배적 애착 유형이 됩니다. 점수가 3 이상이면 High, 미만이면 Mid입니다.</p>
+
+<table>
+<tr><th>애착 유형</th><th>강도</th><th>타이틀</th><th>설명</th></tr>
+<tr><td rowspan="2"><b>애착안정</b></td><td>High(≥3)</td><td>💎 견고한 신뢰형</td><td>타인에 대한 신뢰와 자신에 대한 긍정이 조화를 이룹니다. 갈등을 회피하지 않고 대화로 해결하며, 정서적으로 가장 성숙하고 안정된 관계를 맺습니다.</td></tr>
+<tr><td>Mid(<3)</td><td>🛡️ 안정적 지향형</td><td>관계에서 오는 안정감을 중요시하며, 파트너를 믿고 지지하려 노력합니다. 비교적 편안하고 지속 가능한 연애를 이끌어갑니다.</td></tr>
+<tr><td rowspan="2"><b>애착불안</b></td><td>High(≥3)</td><td>🔥 몰입형 애착</td><td>관계에 대한 몰입도가 매우 높고 정서적 유대감을 최우선으로 합니다. 상대방의 감정 변화를 섬세하게 포착하며, 깊고 밀도 높은 사랑을 추구합니다.</td></tr>
+<tr><td>Mid(<3)</td><td>🦋 감성적 교감형</td><td>사랑받고 있음을 확인받을 때 큰 행복을 느낍니다. 섬세한 감수성을 지녔으며, 파트너와의 정서적 교류를 통해 안정감을 얻습니다.</td></tr>
+<tr><td rowspan="2"><b>애착회피</b></td><td>High(≥3)</td><td>🦅 독립적 성향</td><td>자율성과 독립성을 매우 중요하게 여깁니다. 혼자만의 시간을 통해 에너지를 회복하며, 서로 얽매이지 않는 성숙한 거리를 유지하는 관계를 선호합니다.</td></tr>
+<tr><td>Mid(<3)</td><td>🌵 신중한 거리두기형</td><td>자신의 영역이 존중받길 원합니다. 너무 빠른 친밀감보다는 천천히 신뢰를 쌓아가며, 서로의 삶을 존중하는 균형 잡힌 관계를 지향합니다.</td></tr>
+</table>
+<h1 id="sec5">5. 부록: 솔루션 카드 전체 (36개 시나리오)</h1>
+<p>3가지 카테고리 × 각 12개 시나리오 = 36개의 솔루션이 존재합니다.</p>
+
+<h2>5-1. ✨ 시너지 포인트 (Synergy) — 12개</h2>
+<table><tr><th>#</th><th>조건</th><th>타이틀</th><th>설명</th></tr>
+<tr><td>1</td><td>양측 애착안정≥3</td><td>단단한 뿌리를 가진 거목 커플</td><td>깊은 신뢰를 바탕으로 흔들림이 없습니다. 서로가 가장 든든한 안전기지(Secure Base)가 됩니다.</td></tr>
+<tr><td>2</td><td>불안+회피 교차</td><td>자석처럼 끌어당기는 매력</td><td>서로 다른 애착 성향이 강력한 끌림을 만듭니다. '거리의 미학'을 가르쳐줄 수 있습니다.</td></tr>
+<tr><td>3</td><td>불안+안정 교차</td><td>감성을 감싸주는 따뜻한 둥지</td><td>섬세한 감수성을 듬직한 파트너가 안아주는 형국. 불안감은 확신으로 바뀝니다.</td></tr>
+<tr><td>4</td><td>회피+안정 교차</td><td>기다림과 믿음의 시너지</td><td>혼자만의 시간이 필요한 파트너를 믿고 기다려주는 배려가 빛납니다.</td></tr>
+<tr><td>5</td><td>외향성차≥2</td><td>안과 밖의 완벽한 조화</td><td>'태양'과 '달'의 만남. 한 분은 새 세상을, 한 분은 편안한 휴식을 제공합니다.</td></tr>
+<tr><td>6</td><td>성실성차≥2</td><td>즉흥과 계획의 환상 밸런스</td><td>계획가는 삶의 안정을, 모험가는 일상의 재미를 책임집니다.</td></tr>
+<tr><td>7</td><td>개방성차≥2</td><td>현실과 이상을 잇는 다리</td><td>비전을 제시하는 통찰력과 실현하는 실행력이 만나 꿈을 현실로 만듭니다.</td></tr>
+<tr><td>8</td><td>우호성합≥7</td><td>갈등 제로, 평화의 아이콘</td><td>서로를 먼저 생각하는 이타적인 마음이 모여 따뜻한 커플이 됩니다.</td></tr>
+<tr><td>9</td><td>정서안정합≥7</td><td>어떤 파도에도 흔들리지 않는 배</td><td>위기 관리 능력이 탁월합니다. 큰 파도도 서로의 손을 잡고 이겨냅니다.</td></tr>
+<tr><td>10</td><td>성실성합≥7</td><td>성공을 부르는 파워 커플</td><td>현실적인 목표를 함께 성취해 나가는 최고의 파트너입니다.</td></tr>
+<tr><td>11</td><td>개방성합≥7</td><td>끊임없이 성장하는 탐험가들</td><td>함께 취미를 공유하고 지적 대화를 나누며 성장하는 관계입니다.</td></tr>
+<tr><td>12</td><td>기본값</td><td>서로를 비추는 맑은 거울</td><td>둥글둥글하게 어우러지는 관계. 물 흐르듯 자연스러운 행복을 만듭니다.</td></tr>
+</table>
+
+<h2>5-2. 🗣️ 소통의 레시피 (Communication) — 12개</h2>
+<table><tr><th>#</th><th>조건</th><th>타이틀</th><th>핵심 조언</th></tr>
+<tr><td>1</td><td>우호성평균≥3.5</td><td>마음을 읽어주는 '공감' 대화법</td><td>'고마워', '사랑해' 같은 긍정적 표현을 아끼지 마세요</td></tr>
+<tr><td>2</td><td>성실성평균≥3.5</td><td>핵심을 짚어주는 '솔루션' 대화법</td><td>건설적인 해결책을 나누는 시간이 최고의 힐링</td></tr>
+<tr><td>3</td><td>외향성평균≥3.5</td><td>웃음이 끊이지 않는 '티키타카' 대화법</td><td>유쾌한 농담 속에 가끔 진지한 속마음을 섞어보세요</td></tr>
+<tr><td>4</td><td>개방성합≥7</td><td>상상력을 자극하는 '지적' 대화법</td><td>'만약에' 질문이나 철학적 주제로 대화해 보세요</td></tr>
+<tr><td>5</td><td>우호성차≥2</td><td>이성과 감성의 '통역' 대화법</td><td>'지금은 그냥 들어줘' 혹은 '조언이 필요해'라고 미리 말해주면 오해가 사라집니다</td></tr>
+<tr><td>6</td><td>외향성차≥2</td><td>경청과 리액션의 '핑퐁' 대화법</td><td>서로의 역할이 조화될 때 대화의 만족도가 높아집니다</td></tr>
+<tr><td>7</td><td>애착불안≥3 존재</td><td>따뜻한 확신을 주는 '안심' 대화법</td><td>사소한 확신의 말들이 관계를 단단하게 지탱합니다</td></tr>
+<tr><td>8</td><td>애착회피≥3 존재</td><td>존중과 배려의 'I-Message' 대화법</td><td>'나는 ~해서 속상해'라고 나의 감정을 주어로 말해주세요</td></tr>
+<tr><td>9</td><td>정서안정평균<2</td><td>감정을 식혀주는 '타임아웃' 대화법</td><td>감정 가라앉힌 후 차분하게 이야기하면 상처 없이 해결됩니다</td></tr>
+<tr><td>10</td><td>정서안정평균≥3.5</td><td>편안함을 주는 '티타임' 대화법</td><td>따뜻한 차 한 잔과 함께 나누는 담백한 대화가 관계를 깊게 합니다</td></tr>
+<tr><td>11</td><td>가치관점수 차이>30</td><td>다름을 인정하는 '존중' 대화법</td><td>'당신 생각은 그렇구나'라고 다름을 인정하는 것에서 소통이 시작됩니다</td></tr>
+<tr><td>12</td><td>기본값</td><td>서로의 거울이 되어주는 '미러링' 대화법</td><td>'그랬구나', '당신 말이 맞아'라는 한마디가 마법 같은 변화를 만듭니다</td></tr>
+</table>
+
+<h2>5-3. 🎁 추천 모먼트 (Activity) — 12개</h2>
+<table><tr><th>#</th><th>조건</th><th>타이틀</th><th>추천 활동</th></tr>
+<tr><td>1</td><td>고외향+고개방</td><td>세상을 누비는 '어드벤처'</td><td>해외여행, 테마파크, 패러글라이딩</td></tr>
+<tr><td>2</td><td>고외향+저개방</td><td>함께 땀 흘리는 '스포츠 챌린지'</td><td>러닝, 등산, 배드민턴</td></tr>
+<tr><td>3</td><td>저외향+고개방</td><td>영감을 채우는 '문화 예술 산책'</td><td>전시회, 독립 서점, 재즈바</td></tr>
+<tr><td>4</td><td>저외향+저개방</td><td>온전한 휴식을 즐기는 '힐링 스테이'</td><td>넷플릭스, 호캉스, 배달 음식</td></tr>
+<tr><td>5</td><td>성실성합≥7</td><td>미래를 함께 그리는 '성장 데이트'</td><td>재테크 세미나, 자격증 공부, 운동</td></tr>
+<tr><td>6</td><td>우호성합≥7</td><td>따뜻함을 나누는 '가치 공유'</td><td>봉사활동, 플리마켓, 요리 초대</td></tr>
+<tr><td>7</td><td>외향성차≥2</td><td>자연 속으로 떠나는 '캠핑 & 글램핑'</td><td>야외 활동과 불멍 타임 모두 가능</td></tr>
+<tr><td>8</td><td>개방성평균≥3</td><td>미각을 깨우는 '행복한 미식 투어'</td><td>숨은 맛집 탐방, 와인 테이스팅</td></tr>
+<tr><td>9</td><td>정서안정합≥7</td><td>마음이 맑아지는 '자연 힐링'</td><td>수목원 산책, 템플 스테이, 등산</td></tr>
+<tr><td>10</td><td>개방성평균≥3 (2차)</td><td>손끝으로 만드는 '원데이 클래스'</td><td>도자기, 향수 공방, 베이킹</td></tr>
+<tr><td>11</td><td>정서안정평균<2</td><td>스트레스 날리는 '엔터테인먼트'</td><td>코인 노래방, 오락실, 보드게임 카페</td></tr>
+<tr><td>12</td><td>기본값</td><td>소소하지만 확실한 '동네 데이트'</td><td>동네 맛집, 공원 산책, 마트 장보기</td></tr>
+</table>
+
+<div style="text-align:center;margin:60px 0 40px;padding:30px;border-top:2px solid var(--accent);">
+<p style="color:#9ca3af;font-size:0.85rem;">결하다 기술명세서 v3.4 완전판 — 문서 끝</p>
+</div>
+
+</div>
+</body>
+</html>
