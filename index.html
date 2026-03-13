@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>결하다 기술명세서 v3.4 — 완전판</title>
+<title>결하다 기술명세서 v4.0 — 완전판</title>
 <style>
 :root { --primary: #1E3A5F; --accent: #C5A47E; --blue: #2563EB; --green: #059669; --code-bg: #F8FAFC; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -45,23 +45,27 @@ tr:nth-child(even) td { background: #f9fafb; }
 <div class="cover">
 <p style="color:var(--accent);font-weight:700;letter-spacing:3px;">결하다 (Gyeolhada)</p>
 <h1 style="border:none;margin-top:8px;">파동 표현 · 매칭 타입 · 결 해석</h1>
-<h1 style="border:none;font-size:1.8rem;margin-top:0;">기술 명세서 v3.4 완전판</h1>
+<h1 style="border:none;font-size:1.8rem;margin-top:0;">기술 명세서 v4.0 완전판</h1>
 <p class="sub">8축 성향 카운트 기반 결과 시각화 시스템 — 전체 디스크립션 포함</p>
-<p style="color:#9ca3b8;margin-top:20px;font-size:0.85rem;">문서 버전: v3.4 | 날짜: 2026.03.13 | 대상: 개발팀</p>
+<p style="color:#9ca3b8;margin-top:20px;font-size:0.85rem;">문서 버전: v4.0 | 날짜: 2026.03.13 | 대상: 개발팀</p>
 </div>
 
 <div class="toc">
 <h3 style="margin-top:0;">📋 목차</h3>
 <a href="#sec0">0. 사전 정의: 입력 데이터 구조 (SLOT_COUNT 포함)</a>
 <a href="#sec0-4">&nbsp;&nbsp;0-4. tagToAxis 전체 매핑 (50+개)</a>
-<a href="#sec0-5">&nbsp;&nbsp;<span id="sec0-5"></span>0-5. 채점 시스템 (Total Score 산출)</a>
+<a href="#sec0-5">&nbsp;&nbsp;0-5. 채점 시스템 (Total Score 산출)</a>
+<a href="#sec0-6">&nbsp;&nbsp;0-6. 정규화 보정: SLOT_COUNT → Z-score (v4.0 핵심 변경)</a>
+<a href="#sec0-7">&nbsp;&nbsp;0-7. 슬롯 불균형은 문제인가?</a>
 <a href="#sec1">1. 파동 표현 (Wave Visualization)</a>
 <a href="#sec1-1">&nbsp;&nbsp;1-1. 3축 계산 공식</a>
 <a href="#sec1-2">&nbsp;&nbsp;1-2. 파동 색상 결정</a>
 <a href="#sec1-3">&nbsp;&nbsp;1-3. Canvas 렌더링</a>
 <a href="#sec2">2. 매칭 타입 (Matching Type)</a>
-<a href="#sec2-1">&nbsp;&nbsp;2-1. 12가지 매칭 타입 전체 목록</a>
-<a href="#sec2-2">&nbsp;&nbsp;2-2. 토탈 스코어 등급 (8단계)</a>
+<a href="#sec2-1">&nbsp;&nbsp;2-1. 28개 매칭 타입 전체 목록</a>
+<a href="#sec2-2">&nbsp;&nbsp;2-2. 완전한 구현 코드 (Copy &amp; Paste Ready)</a>
+<a href="#sec2-3">&nbsp;&nbsp;2-3. v4.0 매칭 타입 도달성 분석 (30만 쌍)</a>
+<a href="#sec2-4">&nbsp;&nbsp;2-4. 토탈 스코어 등급 (8단계)</a>
 <a href="#sec3">3. 결 해석 (Gyeol Interpretation)</a>
 <a href="#sec3-1">&nbsp;&nbsp;3-1. 개인 프로필 생성 흐름</a>
 <a href="#sec3-2">&nbsp;&nbsp;3-2. 3축 10단계 설명 전체 (30개)</a>
@@ -94,28 +98,30 @@ axes = {
 <h2>0-2. SLOT_COUNT — 이게 뭐고 왜 필요한가?</h2>
 <div class="note">
 <b>핵심 개념:</b> 24개 설문 문항 전체에서 각 축(axis)에 매핑되는 선택지의 <b>총 개수</b>가 SLOT_COUNT입니다.<br><br>
-예를 들어 <code>성실성</code>의 SLOT_COUNT가 18이라는 건, 24문항 전체를 통틀어 <code>#성실성</code>으로 매핑되는 선택지가 <b>총 18개</b> 존재한다는 뜻입니다. 한 사람이 모든 문항에서 성실성 태그가 붙은 옵션만 골랐다면 최대 18점이 나옵니다.
+예를 들어 <code>성실성</code>의 SLOT_COUNT가 22이라는 건, 24문항 전체를 통틀어 <code>#성실성</code>으로 매핑되는 선택지가 <b>총 22개</b> 존재한다는 뜻입니다. 한 사람이 모든 문항에서 성실성 태그가 붙은 옵션만 골랐다면 최대 22점이 나옵니다.
 </div>
 
 <p><b>왜 필요한가?</b> — 축 간 공정 비교를 위해서입니다.</p>
-<p>애착불안은 슬롯이 <b>6개</b>밖에 안 되고 성실성은 <b>18개</b>나 되므로, 단순 카운트(raw count)로 비교하면 성실성이 항상 높게 나옵니다. 그래서 <b>지배적 성향(dominantTrait)</b>을 결정할 때 <code>count / SLOT_COUNT</code>로 정규화해서 비율로 비교합니다.</p>
+<p>애착불안은 슬롯이 <b>6개</b>밖에 안 되고 성실성은 <b>22개</b>나 되므로, 단순 카운트(raw count)로 비교하면 성실성이 항상 높게 나옵니다. 그래서 <b>지배적 성향(dominantTrait)</b>을 결정할 때 <b>Z-score 정규화</b>로 공정하게 비교합니다. (자세한 내용은 <a href="#sec0-6">Section 0-6</a> 참조)</p>
 
-<pre>// 정규화 예시
-norm_성실성  = axes['성실성'] / 18  →  예: 6/18 = 0.33
-norm_애착불안 = axes['애착불안'] / 6   →  예: 4/6  = 0.67
+<pre>// Z-score 정규화 예시 (v4.0)
+z_성실성  = (6 - 5.50) / 1.9039  →  z = 0.26
+z_애착불안 = (4 - 1.50) / 1.0607  →  z = 2.36
 
 // → raw count는 성실성(6)이 높지만,
-//   정규화하면 애착불안(0.67)이 지배적 성향이 됨</pre>
+//   Z-score는 애착불안(2.36)이 월등히 높음 → 지배적 성향 = 애착불안
+//   "평균 대비 얼마나 극단적인가"를 공정하게 비교</pre>
 
 <table>
-<tr><th>축</th><th>SLOT_COUNT</th><th>설명</th></tr><tr><td><span class="color-dot" style="background:#8B5CF6"></span><b>개방성</b></td><td><b>12</b></td><td>호기심의 색</td></tr><tr><td><span class="color-dot" style="background:#3B82F6"></span><b>성실성</b></td><td><b>18</b></td><td>신뢰의 색</td></tr><tr><td><span class="color-dot" style="background:#F97316"></span><b>외향성</b></td><td><b>10</b></td><td>활력의 색</td></tr><tr><td><span class="color-dot" style="background:#10B981"></span><b>우호성</b></td><td><b>10</b></td><td>배려의 색</td></tr><tr><td><span class="color-dot" style="background:#06B6D4"></span><b>정서안정</b></td><td><b>9</b></td><td>평온의 색</td></tr><tr><td><span class="color-dot" style="background:#6366F1"></span><b>애착안정</b></td><td><b>13</b></td><td>깊은 신뢰의 색</td></tr><tr><td><span class="color-dot" style="background:#EF4444"></span><b>애착불안</b></td><td><b>6</b></td><td>감수성의 색</td></tr><tr><td><span class="color-dot" style="background:#64748B"></span><b>애착회피</b></td><td><b>6</b></td><td>자존의 색</td></tr></table>
+<tr><th>축</th><th>SLOT_COUNT (v4.0 보정)</th><th>설명</th></tr><tr><td><span class="color-dot" style="background:#8B5CF6"></span><b>개방성</b></td><td><b>15</b></td><td>호기심의 색</td></tr><tr><td><span class="color-dot" style="background:#3B82F6"></span><b>성실성</b></td><td><b>22</b></td><td>신뢰의 색</td></tr><tr><td><span class="color-dot" style="background:#F97316"></span><b>외향성</b></td><td><b>11</b></td><td>활력의 색</td></tr><tr><td><span class="color-dot" style="background:#10B981"></span><b>우호성</b></td><td><b>12</b></td><td>배려의 색</td></tr><tr><td><span class="color-dot" style="background:#06B6D4"></span><b>정서안정</b></td><td><b>10</b></td><td>평온의 색</td></tr><tr><td><span class="color-dot" style="background:#6366F1"></span><b>애착안정</b></td><td><b>13</b></td><td>깊은 신뢰의 색</td></tr><tr><td><span class="color-dot" style="background:#EF4444"></span><b>애착불안</b></td><td><b>6</b></td><td>감수성의 색</td></tr><tr><td><span class="color-dot" style="background:#64748B"></span><b>애착회피</b></td><td><b>7</b></td><td>자존의 색</td></tr></table>
 
 <h2>0-3. 지배적 성향(Dominant Trait) 결정</h2>
-<pre>function getDominantTrait(axes) {
-    let maxNorm = -1, dom = '우호성';
-    for (const [trait, score] of Object.entries(axes)) {
-        const norm = score / SLOT_COUNT[trait];  // ← 정규화
-        if (norm > maxNorm) { maxNorm = norm; dom = trait; }
+<pre>// v4.0: Z-score 정규화로 변경
+function getDominantTrait(axes) {
+    let maxZ = -Infinity, dom = '우호성';
+    for (const [trait, count] of Object.entries(axes)) {
+        const z = (count - AXIS_MEAN[trait]) / AXIS_STD[trait];
+        if (z > maxZ) { maxZ = z; dom = trait; }
     }
     return dom;
 }</pre>
@@ -233,6 +239,147 @@ rawScore = simScore × 0.42 + amplifiedCross × 0.15 + dynScore × 0.13 + prefSc
 // 5. 최종
 score = clamp(round(rawScore - criticalPenalty + crossBonus), 0, 100)</pre>
 
+
+<h2 id="sec0-6"><span id="sec0-6"></span>0-6. 정규화 보정: SLOT_COUNT → Z-score (v4.0 핵심 변경)</h2>
+
+<div class="note">
+<b>⚠️ v3.4 → v4.0 핵심 변경사항:</b> 지배적 성향(Dominant Trait) 판별 방식이 <code>count/SLOT_COUNT</code>에서 <b>Z-score 정규화</b>로 변경되었습니다. 파동 3축(진폭/주파수/위상) 계산은 기존과 동일하게 raw count를 사용합니다.
+</div>
+
+<h3>문제 1: SLOT_COUNT 값 불일치</h3>
+<p>v3.3→v3.4에서 이중카운팅을 제거하면서 SLOT_COUNT를 갱신하지 않아 실제 태그 수와 불일치가 발생했습니다.</p>
+<table>
+<tr><th>축</th><th>v3.4 코드값</th><th>실제 태그 수</th><th>차이</th></tr>
+<tr><td>개방성</td><td>12</td><td><b>15</b></td><td style="color:#DC2626">+3 ❌</td></tr>
+<tr><td>성실성</td><td>18</td><td><b>22</b></td><td style="color:#DC2626">+4 ❌</td></tr>
+<tr><td>외향성</td><td>10</td><td><b>11</b></td><td style="color:#DC2626">+1 ❌</td></tr>
+<tr><td>우호성</td><td>10</td><td><b>12</b></td><td style="color:#DC2626">+2 ❌</td></tr>
+<tr><td>정서안정</td><td>9</td><td><b>10</b></td><td style="color:#DC2626">+1 ❌</td></tr>
+<tr><td>애착안정</td><td>13</td><td>13</td><td style="color:#059669">✅</td></tr>
+<tr><td>애착불안</td><td>6</td><td>6</td><td style="color:#059669">✅</td></tr>
+<tr><td>애착회피</td><td>6</td><td><b>7</b></td><td style="color:#DC2626">+1 ❌</td></tr>
+<tr><td><b>합계</b></td><td><b>84</b></td><td><b>96</b></td><td style="color:#DC2626"><b>-12 ❌</b></td></tr>
+</table>
+
+<h3>문제 2: 정규화 방식의 분산 편향</h3>
+<p>SLOT_COUNT를 보정해도 <code>count/SLOT</code> 방식 자체에 구조적 문제가 있습니다.</p>
+
+<p><b>핵심:</b> 슬롯이 적은 축은 정규화 후에도 <b>분산이 크기 때문에</b> 극단값이 자주 출현하여 dominant에 과대 대표됩니다.</p>
+
+<table>
+<tr><th>축</th><th>슬롯</th><th>norm 표준편차</th><th>변동계수(CV)</th><th>문제</th></tr>
+<tr><td>성실성</td><td>22</td><td>0.0864</td><td>34.5%</td><td>가장 안정적</td></tr>
+<tr><td>개방성</td><td>15</td><td>0.1041</td><td>41.7%</td><td>-</td></tr>
+<tr><td>우호성</td><td>12</td><td>0.1177</td><td>47.1%</td><td>-</td></tr>
+<tr><td>외향성</td><td>11</td><td>0.1265</td><td>50.6%</td><td style="color:#DC2626">⚠️ 고분산</td></tr>
+<tr><td>정서안정</td><td>10</td><td>0.1320</td><td>52.8%</td><td style="color:#DC2626">⚠️ 고분산</td></tr>
+<tr><td>애착회피</td><td>7</td><td>0.1557</td><td>62.4%</td><td style="color:#DC2626">⚠️ 고분산</td></tr>
+<tr><td>애착불안</td><td>6</td><td>0.1770</td><td><b>70.8%</b></td><td style="color:#DC2626">⚠️ 최악</td></tr>
+</table>
+
+<p>예시: 애착불안(슬롯=6)은 3개만 골라도 <code>norm=0.50</code>이지만, 성실성(슬롯=22)은 11개를 골라야 같은 0.50입니다. 랜덤 응답 시 애착불안이 dominant로 뜰 확률이 성실성의 <b>2배 이상</b>이었습니다.</p>
+
+<h3>해결: Z-score 정규화 (v4.0)</h3>
+<pre>// 기존 (v3.4) — 평균만 보정, 분산 불균형
+norm = count / SLOT_COUNT   // Var ∝ 1/n → 슬롯 적으면 분산 큼
+
+// 변경 (v4.0) — 평균 + 분산 모두 보정
+z = (count - AXIS_MEAN) / AXIS_STD   // Var = 1 → 모든 축 동일 척도</pre>
+
+<p><b>의미:</b> "이 사람의 이 축 점수가, 랜덤 응답 대비 <b>몇 표준편차만큼 높은가</b>"를 측정합니다.</p>
+
+<h4>사전 계산된 상수 (24문항 균등확률 이론값)</h4>
+<table>
+<tr><th>축</th><th>AXIS_MEAN (μ)</th><th>AXIS_STD (σ)</th><th>산출 근거</th></tr>
+<tr><td>개방성</td><td>3.7500</td><td>1.5612</td><td>15슬롯 × P(선택) 합산</td></tr>
+<tr><td>성실성</td><td>5.5000</td><td>1.9039</td><td>22슬롯 × P(선택) 합산</td></tr>
+<tr><td>외향성</td><td>2.7500</td><td>1.3919</td><td>11슬롯 × P(선택) 합산</td></tr>
+<tr><td>우호성</td><td>3.0000</td><td>1.4142</td><td>12슬롯 × P(선택) 합산</td></tr>
+<tr><td>정서안정</td><td>2.5000</td><td>1.3229</td><td>10슬롯 × P(선택) 합산</td></tr>
+<tr><td>애착안정</td><td>3.2500</td><td>1.5612</td><td>13슬롯 × P(선택) 합산</td></tr>
+<tr><td>애착불안</td><td>1.5000</td><td>1.0607</td><td>6슬롯 × P(선택) 합산</td></tr>
+<tr><td>애착회피</td><td>1.7500</td><td>1.0897</td><td>7슬롯 × P(선택) 합산</td></tr>
+</table>
+<p><b>산출 방법:</b> 각 문항에서 해당 축 태그가 k개 있으면 P(선택)=k/4. 24문항에 걸쳐 합산하면 μ = ΣP, σ = √Σ(P(1-P)).</p>
+
+<h4>보정된 코드</h4>
+<pre>function getDominantTrait(axes) {
+    let maxZ = -Infinity, dom = '우호성';
+    for (const [trait, count] of Object.entries(axes)) {
+        const z = (count - AXIS_MEAN[trait]) / AXIS_STD[trait];
+        if (z > maxZ) { maxZ = z; dom = trait; }
+    }
+    return dom;
+}
+
+// getDominantColor도 동일한 Z-score 방식으로 변경
+// describePersonal의 top1/top2 결정도 동일하게 변경</pre>
+
+<h3>시뮬레이션 검증 결과 (30만 회 랜덤 응답)</h3>
+
+<h4>① Dominant 분포 균등성</h4>
+<table>
+<tr><th>축</th><th>v3.4 현재 (%)</th><th>v4.0 Z-score (%)</th><th>이상적 (12.5%)</th></tr>
+<tr><td>개방성</td><td style="color:#DC2626">17.4% ⚠️</td><td>13.3%</td><td>12.5%</td></tr>
+<tr><td>성실성</td><td>11.8%</td><td>13.1%</td><td>12.5%</td></tr>
+<tr><td>외향성</td><td>12.6%</td><td>13.3%</td><td>12.5%</td></tr>
+<tr><td>우호성</td><td>14.0%</td><td>11.3%</td><td>12.5%</td></tr>
+<tr><td>정서안정</td><td>11.7%</td><td>11.8%</td><td>12.5%</td></tr>
+<tr><td>애착안정</td><td style="color:#DC2626">6.4% ⚠️</td><td>12.2%</td><td>12.5%</td></tr>
+<tr><td>애착불안</td><td>11.2%</td><td>12.1%</td><td>12.5%</td></tr>
+<tr><td>애착회피</td><td>14.7%</td><td>12.9%</td><td>12.5%</td></tr>
+<tr><td colspan="4" style="border-top:2px solid #1e3a5f;"></td></tr>
+<tr><td><b>max/min 비율</b></td><td style="color:#DC2626"><b>2.73x</b></td><td style="color:#059669"><b>1.18x</b></td><td>1.0x</td></tr>
+<tr><td><b>표준편차</b></td><td>3.00%</td><td style="color:#059669"><b>0.71%</b></td><td>0%</td></tr>
+</table>
+
+<h4>② 진짜 성격 판별 정확도 (80% 편향 응답, 1만 회)</h4>
+<p>특정 축에 80% 확률로 편향된 응답을 했을 때, 해당 축이 dominant로 올바르게 판별되는 비율.</p>
+<table>
+<tr><th>타겟 축</th><th>v3.4 정확도</th><th>v4.0 Z-score</th><th>판정</th></tr>
+<tr><td>개방성</td><td>98.0%</td><td><b>99.7%</b></td><td style="color:#059669">✅ 개선</td></tr>
+<tr><td>성실성</td><td>99.8%</td><td>100.0%</td><td style="color:#059669">✅ 동등</td></tr>
+<tr><td>외향성</td><td>99.0%</td><td><b>99.5%</b></td><td style="color:#059669">✅ 개선</td></tr>
+<tr><td>우호성</td><td>98.5%</td><td><b>99.3%</b></td><td style="color:#059669">✅ 개선</td></tr>
+<tr><td>정서안정</td><td>98.9%</td><td><b>99.0%</b></td><td style="color:#059669">✅ 동등</td></tr>
+<tr><td>애착안정</td><td>99.9%</td><td>99.9%</td><td style="color:#059669">✅ 동등</td></tr>
+<tr><td>애착불안</td><td>98.8%</td><td>96.9%</td><td>📊 정상화*</td></tr>
+<tr><td>애착회피</td><td>97.7%</td><td>95.7%</td><td>📊 정상화*</td></tr>
+</table>
+<p style="font-size:0.85rem;color:#6b7280;">* 애착불안/회피의 정확도 소폭 감소는 기존에 "과대 대표"되던 것이 정상 수준으로 돌아온 결과. 분산이 커서 쉽게 dominant가 되던 것을 Z-score가 공정하게 보정한 것.</p>
+
+<h4>③ 매칭 타입 도달성</h4>
+<div class="note"><b>참고:</b> Z-score 보정만의 효과(11타입 기준)는 매칭 타입 확장 이전 분석입니다. <b>v4.0 28개 타입 기준 최종 도달성 분석은 <a href="#sec2-3">Section 2-3</a>을 참조</b>하세요.</div>
+<h3>적용 범위</h3>
+<table>
+<tr><th>기능</th><th>Z-score 적용?</th><th>이유</th></tr>
+<tr><td><b>getDominantTrait()</b></td><td style="color:#059669">✅ 적용</td><td>공정한 축 간 비교 필요</td></tr>
+<tr><td><b>getDominantColor()</b></td><td style="color:#059669">✅ 적용</td><td>dominant 기반 색상 결정</td></tr>
+<tr><td><b>describePersonal() top1/top2</b></td><td style="color:#059669">✅ 적용</td><td>프로필 레이블 결정</td></tr>
+<tr><td>파동 3축(진폭/주파수/위상)</td><td>❌ 미적용</td><td>raw count 기반 가중합 공식, 정규화 불필요</td></tr>
+<tr><td>채점 시스템(Total Score)</td><td>❌ 미적용</td><td>문항별 답변 비교, axes 미사용</td></tr>
+<tr><td>renderPersonalAnalysis Big5 Top3</td><td>❌ 미적용</td><td>Big5 5축만 raw count로 정렬 (애착 제외)</td></tr>
+</table>
+
+<h2 id="sec0-7"><span id="sec0-7"></span>0-7. 슬롯 불균형은 문제인가?</h2>
+
+<h3>결론: 슬롯 불균형 자체는 문제가 아닙니다.</h3>
+
+<p><b>이유 1: 설계상 의도적 구조</b></p>
+<p>24문항은 삼중뇌 이론(파충류뇌/포유류뇌/영장류뇌) 기반으로 설계되었습니다. Big5 성격 요인은 생활습관, 에너지, 가치관 등 광범위한 영역을 측정하므로 자연스럽게 많은 문항에 태그가 분포됩니다(5축 합계 70개, 72.9%). 반면 애착 유형은 연락/부재/싸움/화해 등 특정 관계 상황에서만 측정 가능하므로 슬롯이 적습니다(3축 합계 26개, 27.1%).</p>
+
+<p><b>이유 2: 심리 측정 분야의 표준 관행</b></p>
+<p>NEO-PI-R 등 표준화된 Big5 검사도구에서도 하위척도별 문항 수가 다릅니다. 중요한 것은 문항 수 자체가 아니라 "다른 문항 수를 가진 척도를 공정하게 비교하는 정규화 방법"입니다.</p>
+
+<p><b>이유 3: Z-score가 불균형을 완전히 해소</b></p>
+<p>Z-score는 각 축의 이론적 평균(μ)과 표준편차(σ)를 사용하여 "이 사람의 이 점수가 얼마나 비정상적으로 높은가"를 <b>축 간 동일한 척도</b>로 변환합니다. 슬롯이 6개든 22개든, Z-score의 기대 평균은 0, 분산은 1로 동일합니다.</p>
+
+<pre>// 슬롯 불균형의 영향
+//   count/SLOT: E[norm]=0.25 (동일), Var[norm]=0.25×0.75/n (다름!) ← 문제
+//   Z-score:    E[z]=0 (동일),       Var[z]=1 (동일)                ← 해결</pre>
+
+<p><b>결론:</b> 슬롯 수를 인위적으로 맞출 필요 없이, <b>Z-score 정규화만으로 공정성이 보장됩니다.</b> 오히려 슬롯 수를 억지로 맞추면 설문의 심리학적 타당성이 훼손됩니다.</p>
+
 <h1 id="sec1">1. 파동 표현 (Wave Visualization)</h1>
 <p>Canvas 위에 사인(sin) 파형을 실시간 애니메이션으로 렌더링합니다. 남녀 각각 별도 파형으로 표시되며, <b>3축(진폭/주파수/위상)</b>이 성격을 시각적으로 표현합니다.</p>
 
@@ -281,117 +428,554 @@ phaseDiff = (mPhaseLevel - fPhaseLevel) × 0.3  // 남녀 위상차</pre>
   requestAnimationFrame(animate);
 }</pre>
 <h1 id="sec2">2. 매칭 타입 (Matching Type)</h1>
-<p>남녀 두 사람의 8축 카운트를 비교하여 <b>12가지 매칭 타입 중 하나</b>를 결정합니다. 우선순위가 높은 조건부터 순차적으로 평가하여 <b>첫 번째 해당하는 타입</b>이 부여됩니다.</p>
+<p>남녀 두 사람의 8축 카운트를 비교하여 <b>28개 매칭 타입 중 하나</b>를 결정합니다. 우선순위가 높은 조건부터 순차적으로 평가하여 <b>첫 번째 해당하는 타입</b>이 부여됩니다.</p>
 
-<h2 id="sec2-1">2-1. 12가지 매칭 타입 전체 목록</h2><div class="card" style="margin-bottom:12px;border-left:4px solid #6366F1;">
+<h2 id="sec2-1">2-1. 28개 매칭 타입 전체 목록 (v4.0)</h2>
+<p>7단계 우선순위로 순차 평가하여 <b>첫 번째 해당하는 타입</b>이 부여됩니다.</p>
+<div class="note"><b>구현 핵심:</b> if → else if 체인. 위에서 아래로 순서대로 검사하며, 첫 번째 true인 조건이 최종 결과.</div>
+<h3>P1. 유사성 — 둘의 dominant가 같을 때 (4개)</h3>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #6366F1;">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div class="label" style="color:#6366F1;font-size:1.1rem;">🪞 영혼의 데칼코마니</div>
-        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 1-1</span>
+        <div class="label" style="color:#6366F1;font-size:1.05rem;">🪞 영혼의 데칼코마니</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P1-1</span>
     </div>
-    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">MIRROR IMAGE</div>
-    <div style="font-size:0.88rem;margin-bottom:6px;">말하지 않아도 통하는 거울 같은 사이</div>
-    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>mDom === fDom && (애착불안 || 애착회피)</code></div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">MIRROR IMAGE</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"말하지 않아도 통하는 거울 같은 사이"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>둘 다 애착불안 또는 애착회피가 dominant</code></div>
     <div style="margin-top:6px;"><span class="tag" style="background:#6366F120;color:#6366F1">#도플갱어</span> <span class="tag" style="background:#6366F120;color:#6366F1">#소울메이트</span> <span class="tag" style="background:#6366F120;color:#6366F1">#이심전심</span></div>
-    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #F97316;">
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #F97316;">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div class="label" style="color:#F97316;font-size:1.1rem;">🔥 열정의 스파크</div>
-        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 1-2</span>
+        <div class="label" style="color:#F97316;font-size:1.05rem;">🔥 열정의 스파크</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P1-2</span>
     </div>
-    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">PASSIONATE SOULS</div>
-    <div style="font-size:0.88rem;margin-bottom:6px;">함께하면 세상이 두 배로 즐거운 열정 커플</div>
-    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>mDom === fDom && (외향성 || 정서안정)</code></div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">PASSIONATE SOULS</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"함께하면 세상이 두 배로 즐거운 열정 커플"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>둘 다 외향성 또는 정서안정이 dominant</code></div>
     <div style="margin-top:6px;"><span class="tag" style="background:#F9731620;color:#F97316">#에너지폭발</span> <span class="tag" style="background:#F9731620;color:#F97316">#환상의콤비</span> <span class="tag" style="background:#F9731620;color:#F97316">#지루할틈없음</span></div>
-    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #EAB308;">
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #EAB308;">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div class="label" style="color:#EAB308;font-size:1.1rem;">🧸 포근한 솜이불</div>
-        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 1-3</span>
+        <div class="label" style="color:#EAB308;font-size:1.05rem;">🧸 포근한 솜이불</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P1-3</span>
     </div>
-    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">WARM EMBRACE</div>
-    <div style="font-size:0.88rem;margin-bottom:6px;">바라만 봐도 마음이 놓이는 치유의 관계</div>
-    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>mDom === fDom && (우호성 || 애착안정)</code></div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">WARM EMBRACE</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"바라만 봐도 마음이 놓이는 치유의 관계"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>둘 다 우호성 또는 애착안정이 dominant</code></div>
     <div style="margin-top:6px;"><span class="tag" style="background:#EAB30820;color:#EAB308">#힐링</span> <span class="tag" style="background:#EAB30820;color:#EAB308">#배려왕</span> <span class="tag" style="background:#EAB30820;color:#EAB308">#따뜻함</span></div>
-    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #059669;">
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #059669;">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div class="label" style="color:#059669;font-size:1.1rem;">🌳 뿌리 깊은 나무</div>
-        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 1-4</span>
+        <div class="label" style="color:#059669;font-size:1.05rem;">🌳 뿌리 깊은 나무</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P1-4</span>
     </div>
-    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">DEEP ROOTS</div>
-    <div style="font-size:0.88rem;margin-bottom:6px;">서로에게 가장 든든한 안식처가 되어주는 관계</div>
-    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>mDom === fDom && (성실성 || 개방성)</code></div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">DEEP ROOTS</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"서로에게 가장 든든한 안식처가 되어주는 관계"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>둘 다 성실성 또는 개방성이 dominant</code></div>
     <div style="margin-top:6px;"><span class="tag" style="background:#05966920;color:#059669">#안정감</span> <span class="tag" style="background:#05966920;color:#059669">#신뢰</span> <span class="tag" style="background:#05966920;color:#059669">#평온함</span></div>
-    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #0EA5E9;">
+</div>
+<h3>P2. 상호보완 — dominant가 보완적 조합 (8개)</h3>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #0EA5E9;">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div class="label" style="color:#0EA5E9;font-size:1.1rem;">⚓️ 정적인 닻과 돛</div>
-        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 2-1</span>
+        <div class="label" style="color:#0EA5E9;font-size:1.05rem;">⚓ 닻과 돛</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P2-1</span>
     </div>
-    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">ANCHOR & SAIL</div>
-    <div style="font-size:0.88rem;margin-bottom:6px;">나아갈 힘과 머무를 곳이 되어주는 조화</div>
-    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>외향성 + 정서안정/성실성 교차</code></div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">ANCHOR & SAIL</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"나아갈 힘과 머무를 곳이 되어주는 조화"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>외향성 ↔ 정서안정/성실성</code></div>
     <div style="margin-top:6px;"><span class="tag" style="background:#0EA5E920;color:#0EA5E9">#균형</span> <span class="tag" style="background:#0EA5E920;color:#0EA5E9">#이끌어줌</span> <span class="tag" style="background:#0EA5E920;color:#0EA5E9">#받쳐줌</span></div>
-    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #3B82F6;">
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #3B82F6;">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div class="label" style="color:#3B82F6;font-size:1.1rem;">🔭 비전과 현실</div>
-        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 2-2</span>
+        <div class="label" style="color:#3B82F6;font-size:1.05rem;">🔭 비전과 현실</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P2-2</span>
     </div>
-    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">DREAM & REALITY</div>
-    <div style="font-size:0.88rem;margin-bottom:6px;">꿈을 꾸고 현실로 만드는 완벽한 파트너십</div>
-    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>개방성 + 성실성 교차</code></div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">DREAM & REALITY</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"꿈을 꾸고 현실로 만드는 완벽한 파트너십"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>개방성 ↔ 성실성</code></div>
     <div style="margin-top:6px;"><span class="tag" style="background:#3B82F620;color:#3B82F6">#상호보완</span> <span class="tag" style="background:#3B82F620;color:#3B82F6">#최강팀워크</span> <span class="tag" style="background:#3B82F620;color:#3B82F6">#성장</span></div>
-    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #7C3AED;">
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #F59E0B;">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div class="label" style="color:#7C3AED;font-size:1.1rem;">🧲 이끄는 자와 받쳐주는 자</div>
-        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 3-1</span>
+        <div class="label" style="color:#F59E0B;font-size:1.05rem;">☀️ 햇살과 바람</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P2-3</span>
     </div>
-    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">LEAD & SUPPORT</div>
-    <div style="font-size:0.88rem;margin-bottom:6px;">한 사람이 이끌고 한 사람이 받쳐주는 완벽한 호흡</div>
-    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>phaseGap >= 4</code></div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">SUNSHINE & BREEZE</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"밝은 에너지와 따뜻한 배려가 함께하는 커플"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>우호성 ↔ 외향성</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#F59E0B20;color:#F59E0B">#활기</span> <span class="tag" style="background:#F59E0B20;color:#F59E0B">#다정함</span> <span class="tag" style="background:#F59E0B20;color:#F59E0B">#인기커플</span></div>
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #10B981;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#10B981;font-size:1.05rem;">🏠 따뜻한 지붕</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P2-4</span>
+    </div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">WARM ROOF</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"규칙과 따뜻한 정이 어우러진 모범 가정"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>우호성 ↔ 성실성</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#10B98120;color:#10B981">#가정적</span> <span class="tag" style="background:#10B98120;color:#10B981">#안정</span> <span class="tag" style="background:#10B98120;color:#10B981">#화목</span></div>
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #06B6D4;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#06B6D4;font-size:1.05rem;">🌊 파도와 등대</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P2-5</span>
+    </div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">WAVE & LIGHTHOUSE</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"모험하는 마음을 든든히 지켜주는 관계"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>개방성 ↔ 정서안정</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#06B6D420;color:#06B6D4">#자유</span> <span class="tag" style="background:#06B6D420;color:#06B6D4">#안전</span> <span class="tag" style="background:#06B6D420;color:#06B6D4">#도전</span></div>
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #8B5CF6;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#8B5CF6;font-size:1.05rem;">🌻 설레는 동행</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P2-6</span>
+    </div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">EXCITING COMPANION</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"새로운 세상을 향한 호기심에 따뜻한 공감이 함께하는 관계"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>개방성 ↔ 우호성</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#8B5CF620;color:#8B5CF6">#탐험</span> <span class="tag" style="background:#8B5CF620;color:#8B5CF6">#공감</span> <span class="tag" style="background:#8B5CF620;color:#8B5CF6">#동행</span></div>
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #7C3AED;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#7C3AED;font-size:1.05rem;">🎈 마음 놓는 사이</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P2-7</span>
+    </div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">CAREFREE BOND</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"편안한 신뢰 위에서 마음껏 에너지를 발산할 수 있는 관계"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>애착안정 ↔ 외향성</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#7C3AED20;color:#7C3AED">#활력</span> <span class="tag" style="background:#7C3AED20;color:#7C3AED">#신뢰</span> <span class="tag" style="background:#7C3AED20;color:#7C3AED">#자유로움</span></div>
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #2563EB;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#2563EB;font-size:1.05rem;">🏗️ 함께 짓는 미래</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P2-8</span>
+    </div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">BUILDING TOGETHER</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"깊은 신뢰와 꼼꼼한 계획으로 미래를 함께 설계하는 관계"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>애착안정 ↔ 성실성</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#2563EB20;color:#2563EB">#신뢰</span> <span class="tag" style="background:#2563EB20;color:#2563EB">#계획</span> <span class="tag" style="background:#2563EB20;color:#2563EB">#미래</span></div>
+</div>
+<h3>P3. 3축 기반 — 파동 레벨값으로 판단 (5개)</h3>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #7C3AED;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#7C3AED;font-size:1.05rem;">🧲 이끄는 자와 받쳐주는 자</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P3-1</span>
+    </div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">LEAD & SUPPORT</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"한 사람이 이끌고 한 사람이 받쳐주는 완벽한 호흡"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>phaseGap ≥ 4 AND avgAmp ≥ 6</code></div>
     <div style="margin-top:6px;"><span class="tag" style="background:#7C3AED20;color:#7C3AED">#역할분담</span> <span class="tag" style="background:#7C3AED20;color:#7C3AED">#시너지</span> <span class="tag" style="background:#7C3AED20;color:#7C3AED">#자연스러움</span></div>
-    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #4B5563;">
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #475569;">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div class="label" style="color:#4B5563;font-size:1.1rem;">🏰 견고한 성벽</div>
-        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 3-2</span>
+        <div class="label" style="color:#475569;font-size:1.05rem;">🎐 소리 없는 이끌림</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P3-2</span>
     </div>
-    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">SOLID CASTLE</div>
-    <div style="font-size:0.88rem;margin-bottom:6px;">흔들림 없는 리듬으로 미래를 쌓아가는 전략가들</div>
-    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>avgFreq <= 3</code></div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">SILENT ATTRACTION</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"말 없이도 서로의 역할이 자연스럽게 맞물리는 관계"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>phaseGap ≥ 4 AND avgAmp < 6</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#47556920;color:#475569">#차분한리드</span> <span class="tag" style="background:#47556920;color:#475569">#섬세함</span> <span class="tag" style="background:#47556920;color:#475569">#자연스러움</span></div>
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #4B5563;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#4B5563;font-size:1.05rem;">🏰 견고한 성벽</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P3-3</span>
+    </div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">SOLID CASTLE</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"흔들림 없는 리듬으로 미래를 쌓아가는 전략가들"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>avgFreq ≤ 3 AND avgAmp ≤ 5</code></div>
     <div style="margin-top:6px;"><span class="tag" style="background:#4B556320;color:#4B5563">#철벽방어</span> <span class="tag" style="background:#4B556320;color:#4B5563">#미래지향</span> <span class="tag" style="background:#4B556320;color:#4B5563">#계획적</span></div>
-    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #EF4444;">
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #0369A1;">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div class="label" style="color:#EF4444;font-size:1.1rem;">🎢 다이내믹 듀오</div>
-        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 3-3</span>
+        <div class="label" style="color:#0369A1;font-size:1.05rem;">🕯️ 꺼지지 않는 온기</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P3-4</span>
     </div>
-    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">DYNAMIC ADVENTURE</div>
-    <div style="font-size:0.88rem;margin-bottom:6px;">함께하면 에너지가 두 배, 매일이 새로운 커플</div>
-    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>avgAmp >= 8</code></div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">EVERLASTING WARMTH</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"안정적인 리듬 위에 따뜻한 에너지가 늘 감도는 관계"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>avgFreq ≤ 3 AND avgAmp > 5</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#0369A120;color:#0369A1">#안정</span> <span class="tag" style="background:#0369A120;color:#0369A1">#온기</span> <span class="tag" style="background:#0369A120;color:#0369A1">#든든함</span></div>
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #EF4444;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#EF4444;font-size:1.05rem;">🎢 다이내믹 듀오</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P3-5</span>
+    </div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">DYNAMIC DUO</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"함께하면 에너지가 두 배, 매일이 새로운 커플"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>avgAmp ≥ 7</code></div>
     <div style="margin-top:6px;"><span class="tag" style="background:#EF444420;color:#EF4444">#모험</span> <span class="tag" style="background:#EF444420;color:#EF4444">#스릴</span> <span class="tag" style="background:#EF444420;color:#EF4444">#활력</span></div>
-    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #EC4899;">
+</div>
+<h3>P4. 애착 조합 — 애착 유형 교차 (3개)</h3>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #EC4899;">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div class="label" style="color:#EC4899;font-size:1.1rem;">💎 빛나는 원석</div>
-        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 4-1</span>
+        <div class="label" style="color:#EC4899;font-size:1.05rem;">💫 강렬한 끌림</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P4-1</span>
     </div>
-    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">SHINING GEM</div>
-    <div style="font-size:0.88rem;margin-bottom:6px;">에너지, 리듬, 역할 모두 맞아 빛나는 만남</div>
-    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>ampGap<=2 & freqGap<=2 & phaseGap<=2</code></div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">INTENSE ATTRACTION</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"서로 다른 리듬이 만들어내는 강한 이끌림의 관계"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>불안형(anxious) × 회피형(avoidant)</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#EC489920;color:#EC4899">#끌림</span> <span class="tag" style="background:#EC489920;color:#EC4899">#긴장감</span> <span class="tag" style="background:#EC489920;color:#EC4899">#성장</span></div>
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #F43F5E;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#F43F5E;font-size:1.05rem;">🌸 안아주는 봄</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P4-2</span>
+    </div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">EMBRACING SPRING</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"풍부한 감성을 든든히 안아주는 따뜻한 관계"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>불안형(anxious) × 안정형(secure)</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#F43F5E20;color:#F43F5E">#치유</span> <span class="tag" style="background:#F43F5E20;color:#F43F5E">#포용</span> <span class="tag" style="background:#F43F5E20;color:#F43F5E">#안심</span></div>
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #6366F1;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#6366F1;font-size:1.05rem;">🌙 느린 듯 깊은 사이</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P4-3</span>
+    </div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">SLOWLY DEEPER</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"각자의 속도를 존중하며 천천히 깊어지는 관계"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>회피형(avoidant) × 안정형(secure)</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#6366F120;color:#6366F1">#존중</span> <span class="tag" style="background:#6366F120;color:#6366F1">#여유</span> <span class="tag" style="background:#6366F120;color:#6366F1">#신뢰</span></div>
+</div>
+<h3>P5. 조화도 — 삼박자 세분화 (3개)</h3>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #EC4899;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#EC4899;font-size:1.05rem;">💎 빛나는 원석</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P5-1</span>
+    </div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">SHINING GEM</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"에너지, 리듬, 역할 모두 맞아 빛나는 만남"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>ampGap≤2 & freqGap≤2 & phaseGap≤2 & avgAmp≥6</code></div>
     <div style="margin-top:6px;"><span class="tag" style="background:#EC489920;color:#EC4899">#삼박자</span> <span class="tag" style="background:#EC489920;color:#EC4899">#조화</span> <span class="tag" style="background:#EC489920;color:#EC4899">#찰떡궁합</span></div>
-    </div><div class="card" style="margin-bottom:12px;border-left:4px solid #8B5CF6;">
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #059669;">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div class="label" style="color:#8B5CF6;font-size:1.1rem;">🌈 다채로운 프리즘</div>
-        <span class="badge" style="background:#f1f5f9;color:#6b7280;">우선순위 FB</span>
+        <div class="label" style="color:#059669;font-size:1.05rem;">🍵 편안한 하모니</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P5-2</span>
     </div>
-    <div style="font-size:0.8rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">COLORFUL PRISM</div>
-    <div style="font-size:0.88rem;margin-bottom:6px;">서로 다른 색이 만나 아름다운 무지개를 만듭니다</div>
-    <div style="font-size:0.8rem;color:#6b7280;"><b>조건:</b> <code>Fallback (위 조건 모두 미해당)</code></div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">EASY HARMONY</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"힘 빼지 않아도 자연스럽게 맞는 편안한 관계"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>삼박자 & avgAmp<6 & avgFreq≤5</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#05966920;color:#059669">#평온</span> <span class="tag" style="background:#05966920;color:#059669">#조화</span> <span class="tag" style="background:#05966920;color:#059669">#편안함</span></div>
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #A855F7;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#A855F7;font-size:1.05rem;">💓 설레는 하모니</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P5-3</span>
+    </div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">FLUTTERING HARMONY</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"풍부한 감정이 같은 리듬으로 함께 뛰는 관계"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>삼박자 & avgFreq>5</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#A855F720;color:#A855F7">#감성</span> <span class="tag" style="background:#A855F720;color:#A855F7">#공명</span> <span class="tag" style="background:#A855F720;color:#A855F7">#설렘</span></div>
+</div>
+<h3>P6. 2순위 기반 — 숨겨진 연결 (2개)</h3>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #7C3AED;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#7C3AED;font-size:1.05rem;">🔮 발견하는 닮은꼴</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P6-1</span>
+    </div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">DISCOVERING ALIKE</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"알아갈수록 닮은 점을 발견하는 설렘"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>남녀 2순위(top2) 성향이 같음</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#7C3AED20;color:#7C3AED">#닮은꼴</span> <span class="tag" style="background:#7C3AED20;color:#7C3AED">#깊은연결</span> <span class="tag" style="background:#7C3AED20;color:#7C3AED">#설렘</span></div>
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #0891B2;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#0891B2;font-size:1.05rem;">🧩 맞물리는 퍼즐</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P6-2</span>
+    </div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">PERFECT FIT</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"서로의 숨겨진 면이 상대의 중심과 딱 맞물리는 관계"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>한쪽의 top2가 상대의 dominant</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#0891B220;color:#0891B2">#퍼즐</span> <span class="tag" style="background:#0891B220;color:#0891B2">#보완</span> <span class="tag" style="background:#0891B220;color:#0891B2">#재발견</span></div>
+</div>
+<h3>P7. 에너지 기반 + Fallback (3개)</h3>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #DC2626;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#DC2626;font-size:1.05rem;">⚡ 타오르는 케미</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P7-1</span>
+    </div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">BURNING CHEMISTRY</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"서로 다른 강렬한 에너지가 만나 뜨거운 케미를 만드는 관계"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>avgAmp ≥ 6 AND avgFreq ≥ 6</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#DC262620;color:#DC2626">#케미</span> <span class="tag" style="background:#DC262620;color:#DC2626">#강렬</span> <span class="tag" style="background:#DC262620;color:#DC2626">#자극</span></div>
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #16A34A;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#16A34A;font-size:1.05rem;">🌿 고요한 깊이</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P7-2</span>
+    </div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">QUIET DEPTH</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"조용하지만 깊은 내면으로 연결되는 관계"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>avgAmp ≤ 4 AND avgFreq ≤ 4</code></div>
+    <div style="margin-top:6px;"><span class="tag" style="background:#16A34A20;color:#16A34A">#평화</span> <span class="tag" style="background:#16A34A20;color:#16A34A">#깊이</span> <span class="tag" style="background:#16A34A20;color:#16A34A">#내면</span></div>
+</div>
+<div class="card" style="margin-bottom:12px;border-left:4px solid #8B5CF6;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="label" style="color:#8B5CF6;font-size:1.05rem;">🌈 다채로운 프리즘</div>
+        <span class="badge" style="background:#f1f5f9;color:#6b7280;">P7-FB</span>
+    </div>
+    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;letter-spacing:1px;margin:2px 0 6px;">COLORFUL PRISM</div>
+    <div style="font-size:0.92rem;margin-bottom:8px;font-weight:500;">"서로 다른 색이 만나 아름다운 무지개를 만드는 관계"</div>
+    <div style="font-size:0.82rem;color:#6b7280;"><b>조건:</b> <code>위 모든 조건 미해당 (Fallback)</code></div>
     <div style="margin-top:6px;"><span class="tag" style="background:#8B5CF620;color:#8B5CF6">#개성</span> <span class="tag" style="background:#8B5CF620;color:#8B5CF6">#존중</span> <span class="tag" style="background:#8B5CF620;color:#8B5CF6">#새로움</span></div>
-    </div>
-<div class="note"><b>구현 포인트:</b> 조건 평가는 반드시 위에서 아래로 순차적으로 수행. 첫 번째 true가 되는 조건이 최종 매칭 타입입니다. <code>if-else if</code> 체인으로 구현하면 됩니다.</div>
+</div>
+<h2 id="sec2-2">2-2. 완전한 구현 코드 (Copy & Paste Ready)</h2>
+<p>아래 코드를 그대로 복사하여 사용할 수 있습니다. 외부 의존성 없음.</p>
 
-<h2 id="sec2-2">2-2. 토탈 스코어 등급 (8단계)</h2>
+<h3>사전 조건: 필요한 상수와 함수</h3>
+<pre>const AXIS_MEAN = {
+    '개방성': 3.75,   '성실성': 5.50,   '외향성': 2.75,   '우호성': 3.00,
+    '정서안정': 2.50,  '애착안정': 3.25,  '애착불안': 1.50,  '애착회피': 1.75
+};
+const AXIS_STD = {
+    '개방성': 1.5612, '성실성': 1.9039, '외향성': 1.3919, '우호성': 1.4142,
+    '정서안정': 1.3229, '애착안정': 1.5612, '애착불안': 1.0607, '애착회피': 1.0897
+};
+
+function getDominantTrait(axes) {
+    let maxZ = -Infinity, dom = '우호성';
+    for (const [trait, count] of Object.entries(axes)) {
+        const z = (count - AXIS_MEAN[trait]) / AXIS_STD[trait];
+        if (z > maxZ) { maxZ = z; dom = trait; }
+    }
+    return dom;
+}</pre>
+
+<h3>getMatchType 함수 전체 (28개 타입, 그대로 복사 가능)</h3>
+<p><b>입력:</b> maleAxes, femaleAxes (8축 카운트 객체) &nbsp;|&nbsp; <b>출력:</b> { title, sub, icon, tags, desc, color, borderColor }</p>
+<pre>function getMatchType(maleAxes, femaleAxes) {
+    const mDom = getDominantTrait(maleAxes);
+    const fDom = getDominantTrait(femaleAxes);
+
+    // 2순위 성향
+    const getTop2 = (ax) =&gt; {
+        const sorted = Object.entries(ax)
+            .map(([k, v]) =&gt; ({ k, z: (v - AXIS_MEAN[k]) / AXIS_STD[k] }))
+            .sort((a, b) =&gt; b.z - a.z);
+        return sorted[1].k;
+    };
+    const mT2 = getTop2(maleAxes), fT2 = getTop2(femaleAxes);
+
+    // 3축 계산
+    const cl = (v, o) =&gt; Math.max(1, Math.min(10, Math.round(v + o) || 1));
+    const calcAmp = (ax) =&gt; cl((ax['외향성']||0)*1.2 + (ax['개방성']||0)*0.6 + (ax['애착안정']||0)*0.4 - (ax['애착회피']||0)*0.8, 0);
+    const calcFreq = (ax) =&gt; cl((ax['애착불안']||0)*1.0 + (ax['개방성']||0)*0.4 - (ax['정서안정']||0)*0.8 - (ax['성실성']||0)*0.3, 6);
+    const calcPhase = (ax) =&gt; cl((ax['외향성']||0)*0.8 + (ax['애착안정']||0)*0.5 - (ax['우호성']||0)*0.9 - (ax['애착회피']||0)*0.7, 5.5);
+    const mAmp = calcAmp(maleAxes), fAmp = calcAmp(femaleAxes);
+    const mFreq = calcFreq(maleAxes), fFreq = calcFreq(femaleAxes);
+    const mPhase = calcPhase(maleAxes), fPhase = calcPhase(femaleAxes);
+    const ampGap = Math.abs(mAmp - fAmp), freqGap = Math.abs(mFreq - fFreq), phaseGap = Math.abs(mPhase - fPhase);
+    const avgAmp = (mAmp + fAmp) / 2, avgFreq = (mFreq + fFreq) / 2;
+
+    // 애착 유형
+    const getAttach = (ax) =&gt; { const s=ax['애착안정']||0, n=ax['애착불안']||0, v=ax['애착회피']||0; if(s&gt;=n &amp;&amp; s&gt;=v) return 'secure'; return n&gt;=v ? 'anxious' : 'avoidant'; };
+    const atCombo = [getAttach(maleAxes), getAttach(femaleAxes)].sort().join('-');
+
+    // ════ P1. 유사성 (4개) ════
+    if (mDom === fDom) {
+        if (mDom === '애착불안' || mDom === '애착회피')
+            return { title: '🪞 영혼의 데칼코마니', sub: 'MIRROR IMAGE', icon: '👯',
+                     tags: ['#도플갱어','#소울메이트','#이심전심'],
+                     desc: '말하지 않아도 통하는 거울 같은 사이',
+                     color: '#6366F1', borderColor: '#C7D2FE' };
+        if (mDom === '외향성' || mDom === '정서안정')
+            return { title: '🔥 열정의 스파크', sub: 'PASSIONATE SOULS', icon: '🎆',
+                     tags: ['#에너지폭발','#환상의콤비','#지루할틈없음'],
+                     desc: '함께하면 세상이 두 배로 즐거운 열정 커플',
+                     color: '#F97316', borderColor: '#FED7AA' };
+        if (mDom === '우호성' || mDom === '애착안정')
+            return { title: '🧸 포근한 솜이불', sub: 'WARM EMBRACE', icon: '🧶',
+                     tags: ['#힐링','#배려왕','#따뜻함'],
+                     desc: '바라만 봐도 마음이 놓이는 치유의 관계',
+                     color: '#EAB308', borderColor: '#FDE047' };
+        return { title: '🌳 뿌리 깊은 나무', sub: 'DEEP ROOTS', icon: '🏞️',
+                 tags: ['#안정감','#신뢰','#평온함'],
+                 desc: '서로에게 가장 든든한 안식처가 되어주는 관계',
+                 color: '#059669', borderColor: '#A7F3D0' };
+    }
+
+    // ════ P2. 상호보완 (8개) ════
+    if ((mDom==='외향성' &amp;&amp; ['정서안정','성실성'].includes(fDom)) || (fDom==='외향성' &amp;&amp; ['정서안정','성실성'].includes(mDom)))
+        return { title: '⚓ 닻과 돛', sub: 'ANCHOR &amp; SAIL', icon: '⛵', tags: ['#균형','#이끌어줌','#받쳐줌'], desc: '나아갈 힘과 머무를 곳이 되어주는 조화', color: '#0EA5E9', borderColor: '#BAE6FD' };
+    if ((mDom==='개방성' &amp;&amp; fDom==='성실성') || (mDom==='성실성' &amp;&amp; fDom==='개방성'))
+        return { title: '🔭 비전과 현실', sub: 'DREAM &amp; REALITY', icon: '🚀', tags: ['#상호보완','#최강팀워크','#성장'], desc: '꿈을 꾸고 현실로 만드는 완벽한 파트너십', color: '#3B82F6', borderColor: '#BFDBFE' };
+    if ((mDom==='우호성' &amp;&amp; fDom==='외향성') || (mDom==='외향성' &amp;&amp; fDom==='우호성'))
+        return { title: '☀️ 햇살과 바람', sub: 'SUNSHINE &amp; BREEZE', icon: '🌤️', tags: ['#활기','#다정함','#인기커플'], desc: '밝은 에너지와 따뜻한 배려가 함께하는 커플', color: '#F59E0B', borderColor: '#FDE68A' };
+    if ((mDom==='우호성' &amp;&amp; fDom==='성실성') || (mDom==='성실성' &amp;&amp; fDom==='우호성'))
+        return { title: '🏠 따뜻한 지붕', sub: 'WARM ROOF', icon: '🏡', tags: ['#가정적','#안정','#화목'], desc: '규칙과 따뜻한 정이 어우러진 모범 가정', color: '#10B981', borderColor: '#A7F3D0' };
+    if ((mDom==='개방성' &amp;&amp; fDom==='정서안정') || (mDom==='정서안정' &amp;&amp; fDom==='개방성'))
+        return { title: '🌊 파도와 등대', sub: 'WAVE &amp; LIGHTHOUSE', icon: '🏖️', tags: ['#자유','#안전','#도전'], desc: '모험하는 마음을 든든히 지켜주는 관계', color: '#06B6D4', borderColor: '#CFFAFE' };
+    if ((mDom==='개방성' &amp;&amp; fDom==='우호성') || (mDom==='우호성' &amp;&amp; fDom==='개방성'))
+        return { title: '🌻 설레는 동행', sub: 'EXCITING COMPANION', icon: '🤝', tags: ['#탐험','#공감','#동행'], desc: '새로운 세상을 향한 호기심에 따뜻한 공감이 함께하는 관계', color: '#8B5CF6', borderColor: '#DDD6FE' };
+    if ((mDom==='애착안정' &amp;&amp; fDom==='외향성') || (mDom==='외향성' &amp;&amp; fDom==='애착안정'))
+        return { title: '🎈 마음 놓는 사이', sub: 'CAREFREE BOND', icon: '🎉', tags: ['#활력','#신뢰','#자유로움'], desc: '편안한 신뢰 위에서 마음껏 에너지를 발산할 수 있는 관계', color: '#7C3AED', borderColor: '#DDD6FE' };
+    if ((mDom==='애착안정' &amp;&amp; fDom==='성실성') || (mDom==='성실성' &amp;&amp; fDom==='애착안정'))
+        return { title: '🏗️ 함께 짓는 미래', sub: 'BUILDING TOGETHER', icon: '📋', tags: ['#신뢰','#계획','#미래'], desc: '깊은 신뢰와 꼼꼼한 계획으로 미래를 함께 설계하는 관계', color: '#2563EB', borderColor: '#BFDBFE' };
+
+    // ════ P3. 3축 기반 (5개) ════
+    if (phaseGap &gt;= 4) {
+        if (avgAmp &gt;= 6) return { title: '🧲 이끄는 자와 받쳐주는 자', sub: 'LEAD &amp; SUPPORT', icon: '🤝', tags: ['#역할분담','#시너지','#자연스러움'], desc: '한 사람이 이끌고 한 사람이 받쳐주는 완벽한 호흡', color: '#7C3AED', borderColor: '#DDD6FE' };
+        return { title: '🎐 소리 없는 이끌림', sub: 'SILENT ATTRACTION', icon: '🫶', tags: ['#차분한리드','#섬세함','#자연스러움'], desc: '말 없이도 서로의 역할이 자연스럽게 맞물리는 관계', color: '#475569', borderColor: '#CBD5E1' };
+    }
+    if (avgFreq &lt;= 3 &amp;&amp; avgAmp &lt;= 5) return { title: '🏰 견고한 성벽', sub: 'SOLID CASTLE', icon: '🛡️', tags: ['#철벽방어','#미래지향','#계획적'], desc: '흔들림 없는 리듬으로 미래를 쌓아가는 전략가들', color: '#4B5563', borderColor: '#E5E7EB' };
+    if (avgFreq &lt;= 3 &amp;&amp; avgAmp &gt; 5) return { title: '🕯️ 꺼지지 않는 온기', sub: 'EVERLASTING WARMTH', icon: '☕', tags: ['#안정','#온기','#든든함'], desc: '안정적인 리듬 위에 따뜻한 에너지가 늘 감도는 관계', color: '#0369A1', borderColor: '#BAE6FD' };
+    if (avgAmp &gt;= 7) return { title: '🎢 다이내믹 듀오', sub: 'DYNAMIC DUO', icon: '🎡', tags: ['#모험','#스릴','#활력'], desc: '함께하면 에너지가 두 배, 매일이 새로운 커플', color: '#EF4444', borderColor: '#FECACA' };
+
+    // ════ P4. 애착 조합 (3개) ════
+    if (atCombo === 'anxious-avoidant') return { title: '💫 강렬한 끌림', sub: 'INTENSE ATTRACTION', icon: '🧲', tags: ['#끌림','#긴장감','#성장'], desc: '서로 다른 리듬이 만들어내는 강한 이끌림의 관계', color: '#EC4899', borderColor: '#FBCFE8' };
+    if (atCombo === 'anxious-secure') return { title: '🌸 안아주는 봄', sub: 'EMBRACING SPRING', icon: '🌷', tags: ['#치유','#포용','#안심'], desc: '풍부한 감성을 든든히 안아주는 따뜻한 관계', color: '#F43F5E', borderColor: '#FECDD3' };
+    if (atCombo === 'avoidant-secure') return { title: '🌙 느린 듯 깊은 사이', sub: 'SLOWLY DEEPER', icon: '🌛', tags: ['#존중','#여유','#신뢰'], desc: '각자의 속도를 존중하며 천천히 깊어지는 관계', color: '#6366F1', borderColor: '#C7D2FE' };
+
+    // ════ P5. 조화도 (3개) ════
+    if (ampGap &lt;= 2 &amp;&amp; freqGap &lt;= 2 &amp;&amp; phaseGap &lt;= 2) {
+        if (avgAmp &gt;= 6) return { title: '💎 빛나는 원석', sub: 'SHINING GEM', icon: '💍', tags: ['#삼박자','#조화','#찰떡궁합'], desc: '에너지, 리듬, 역할 모두 맞아 빛나는 만남', color: '#EC4899', borderColor: '#FBCFE8' };
+        if (avgFreq &lt;= 5) return { title: '🍵 편안한 하모니', sub: 'EASY HARMONY', icon: '☕', tags: ['#평온','#조화','#편안함'], desc: '힘 빼지 않아도 자연스럽게 맞는 편안한 관계', color: '#059669', borderColor: '#A7F3D0' };
+        return { title: '💓 설레는 하모니', sub: 'FLUTTERING HARMONY', icon: '🎵', tags: ['#감성','#공명','#설렘'], desc: '풍부한 감정이 같은 리듬으로 함께 뛰는 관계', color: '#A855F7', borderColor: '#E9D5FF' };
+    }
+
+    // ════ P6. 2순위 기반 (2개) ════
+    if (mT2 === fT2) return { title: '🔮 발견하는 닮은꼴', sub: 'DISCOVERING ALIKE', icon: '✨', tags: ['#닮은꼴','#깊은연결','#설렘'], desc: '알아갈수록 닮은 점을 발견하는 설렘', color: '#7C3AED', borderColor: '#DDD6FE' };
+    if (mT2 === fDom || fT2 === mDom) return { title: '🧩 맞물리는 퍼즐', sub: 'PERFECT FIT', icon: '🧩', tags: ['#퍼즐','#보완','#재발견'], desc: '서로의 숨겨진 면이 상대의 중심과 딱 맞물리는 관계', color: '#0891B2', borderColor: '#CFFAFE' };
+
+    // ════ P7. 에너지 + Fallback (3개) ════
+    if (avgAmp &gt;= 6 &amp;&amp; avgFreq &gt;= 6) return { title: '⚡ 타오르는 케미', sub: 'BURNING CHEMISTRY', icon: '🔥', tags: ['#케미','#강렬','#자극'], desc: '서로 다른 강렬한 에너지가 만나 뜨거운 케미를 만드는 관계', color: '#DC2626', borderColor: '#FCA5A5' };
+    if (avgAmp &lt;= 4 &amp;&amp; avgFreq &lt;= 4) return { title: '🌿 고요한 깊이', sub: 'QUIET DEPTH', icon: '🍃', tags: ['#평화','#깊이','#내면'], desc: '조용하지만 깊은 내면으로 연결되는 관계', color: '#16A34A', borderColor: '#86EFAC' };
+    return { title: '🌈 다채로운 프리즘', sub: 'COLORFUL PRISM', icon: '🎨', tags: ['#개성','#존중','#새로움'], desc: '서로 다른 색이 만나 아름다운 무지개를 만드는 관계', color: '#8B5CF6', borderColor: '#DDD6FE' };
+}
+</pre>
+
+<h3>판단 흐름도</h3>
+<pre>
+입력: maleAxes, femaleAxes
+  │
+  ├─ mDom === fDom? ──────── YES → P1 (4타입)
+  │       NO                       ├ 애착불안/회피 → 🪞 데칼코마니
+  │                                ├ 외향성/정서안정 → 🔥 스파크
+  │                                ├ 우호성/애착안정 → 🧸 솜이불
+  │                                └ 성실성/개방성 → 🌳 나무
+  ├─ dominant 보완쌍? ────── YES → P2 (8타입)
+  │       NO                       ├ 외향성↔정서안정/성실성 → ⚓ 닻과돛
+  │                                ├ 개방성↔성실성 → 🔭 비전과현실
+  │                                ├ 우호성↔외향성 → ☀️ 햇살과바람
+  │                                ├ 우호성↔성실성 → 🏠 따뜻한지붕
+  │                                ├ 개방성↔정서안정 → 🌊 파도와등대
+  │                                ├ 개방성↔우호성 → 🌻 설레는동행
+  │                                ├ 애착안정↔외향성 → 🎈 마음놓는사이
+  │                                └ 애착안정↔성실성 → 🏗️ 함께짓는미래
+  ├─ phaseGap ≥ 4? ──────── YES → P3 (에너지 분기)
+  │       NO                       ├ avgAmp ≥ 6 → 🧲 이끄는자
+  │                                └ avgAmp &lt; 6 → 🎐 소리없는이끌림
+  ├─ avgFreq ≤ 3? ──────── YES → P3 (에너지 분기)
+  │       NO                       ├ avgAmp ≤ 5 → 🏰 견고한성벽
+  │                                └ avgAmp &gt; 5 → 🕯️ 꺼지지않는온기
+  ├─ avgAmp ≥ 7? ────────── YES → 🎢 다이내믹듀오
+  │       NO
+  ├─ 애착조합? ──────────── YES → P4 (3타입)
+  │       NO                       ├ anxious-avoidant → 💫 강렬한끌림
+  │                                ├ anxious-secure → 🌸 안아주는봄
+  │                                └ avoidant-secure → 🌙 느린듯깊은사이
+  ├─ 삼박자? ────────────── YES → P5 (3타입)
+  │  (aG≤2, fG≤2, pG≤2)           ├ avgAmp ≥ 6 → 💎 빛나는원석
+  │       NO                       ├ avgFreq ≤ 5 → 🍵 편안한하모니
+  │                                └ else → 💓 설레는하모니
+  ├─ 2순위 연결? ────────── YES → P6 (2타입)
+  │       NO                       ├ top2 같음 → 🔮 발견하는닮은꼴
+  │                                └ top2↔dom → 🧩 맞물리는퍼즐
+  ├─ avgAmp≥6 &amp; avgFreq≥6? YES → ⚡ 타오르는케미
+  ├─ avgAmp≤4 &amp; avgFreq≤4? YES → 🌿 고요한깊이
+  └─ else ─────────────────── → 🌈 다채로운프리즘
+</pre>
+
+<h3>반환값 UI 바인딩 예시</h3>
+<pre>const matchType = getMatchType(maleAxes, femaleAxes);
+
+// 카드 렌더링
+titleEl.textContent = matchType.title;       // "🪞 영혼의 데칼코마니"
+titleEl.style.color = matchType.color;       // "#6366F1"
+subtitleEl.textContent = matchType.sub;      // "MIRROR IMAGE"
+descEl.textContent = matchType.desc;         // "말하지 않아도 통하는..."
+matchType.tags.forEach(tag =&gt; /* &lt;span class="tag"&gt;#소울메이트&lt;/span&gt; */);
+cardEl.style.borderColor = matchType.borderColor; // "#C7D2FE"</pre>
+<h2 id="sec2-3">2-3. v4.0 매칭 타입 도달성 분석 (30만 쌍 시뮬레이션)</h2>
+
+<h3>전체 분포</h3>
 <table>
-<tr><th>최소 점수</th><th>등급</th><th>설명</th></tr><tr><td><b>90점</b></td><td>💎 운명적 공명</td><td>두 파동이 완벽하게 겹쳐 하나처럼 울립니다</td></tr><tr><td><b>80점</b></td><td>✨ 깊은 교감</td><td>많은 부분에서 깊이 통하는 자연스러운 공명입니다</td></tr><tr><td><b>70점</b></td><td>🔥 자연스러운 조화</td><td>함께 있을 때 편안함이 느껴지는 궁합입니다</td></tr><tr><td><b>60점</b></td><td>🌊 좋은 흐름</td><td>서로를 보완하며 좋은 시너지를 만들어냅니다</td></tr><tr><td><b>50점</b></td><td>🌿 성장하는 관계</td><td>대화와 이해로 더 깊어질 잠재력이 있습니다</td></tr><tr><td><b>40점</b></td><td>🌀 탐색적 만남</td><td>서로 다른 점을 발견하는 새로운 만남입니다</td></tr><tr><td><b>25점</b></td><td>🔮 다양성의 매력</td><td>다른 리듬이 만드는 새로운 가능성의 만남입니다</td></tr><tr><td><b>0점</b></td><td>⚡ 도전적 여정</td><td>서로 다른 세계를 가진 특별한 만남입니다</td></tr></table><h1 id="sec3">3. 결 해석 (Gyeol Interpretation)</h1>
+<tr><th>#</th><th>매칭 타입</th><th>출현율</th><th>Priority</th></tr>
+<tr><td>1</td><td>🎐 소리 없는 이끌림</td><td><b>9.7%</b></td><td>P3</td></tr>
+<tr><td>2</td><td>🌙 느린 듯 깊은 사이</td><td>7.0%</td><td>P4</td></tr>
+<tr><td>3</td><td>🌸 안아주는 봄</td><td>6.9%</td><td>P4</td></tr>
+<tr><td>4</td><td>🎢 다이내믹 듀오</td><td>6.7%</td><td>P3</td></tr>
+<tr><td>5</td><td>⚓ 닻과 돛</td><td>6.6%</td><td>P2</td></tr>
+<tr><td>6</td><td>🧲 이끄는 자와 받쳐주는 자</td><td>5.7%</td><td>P3</td></tr>
+<tr><td>7</td><td>🌈 다채로운 프리즘</td><td>5.4%</td><td>FB</td></tr>
+<tr><td>8</td><td>🌳 뿌리 깊은 나무</td><td>3.5%</td><td>P1</td></tr>
+<tr><td>9</td><td>🔭 비전과 현실</td><td>3.4%</td><td>P2</td></tr>
+<tr><td>10</td><td>☀️ 햇살과 바람</td><td>3.4%</td><td>P2</td></tr>
+<tr><td>11</td><td>🌻 설레는 동행</td><td>3.3%</td><td>P2</td></tr>
+<tr><td>12</td><td>🎈 마음 놓는 사이</td><td>3.2%</td><td>P2</td></tr>
+<tr><td>13</td><td>🏠 따뜻한 지붕</td><td>3.2%</td><td>P2</td></tr>
+<tr><td>14</td><td>🏗️ 함께 짓는 미래</td><td>3.1%</td><td>P2</td></tr>
+<tr><td>15</td><td>🔥 열정의 스파크</td><td>3.1%</td><td>P1</td></tr>
+<tr><td>16</td><td>🧩 맞물리는 퍼즐</td><td>3.1%</td><td>P6</td></tr>
+<tr><td>17</td><td>🌊 파도와 등대</td><td>3.1%</td><td>P2</td></tr>
+<tr><td>18</td><td>🧸 포근한 솜이불</td><td>3.0%</td><td>P1</td></tr>
+<tr><td>19</td><td>🪞 영혼의 데칼코마니</td><td>2.9%</td><td>P1</td></tr>
+<tr><td>20</td><td>🍵 편안한 하모니</td><td>2.8%</td><td>P5</td></tr>
+<tr><td>21</td><td>💓 설레는 하모니</td><td>2.2%</td><td>P5</td></tr>
+<tr><td>22</td><td>💎 빛나는 원석</td><td>2.1%</td><td>P5</td></tr>
+<tr><td>23</td><td>🏰 견고한 성벽</td><td>1.8%</td><td>P3</td></tr>
+<tr><td>24</td><td>💫 강렬한 끌림</td><td>1.7%</td><td>P4</td></tr>
+<tr><td>25</td><td>🔮 발견하는 닮은꼴</td><td>1.4%</td><td>P6</td></tr>
+<tr><td>26</td><td>⚡ 타오르는 케미</td><td>1.0%</td><td>P7</td></tr>
+<tr><td>27</td><td>🕯️ 꺼지지 않는 온기</td><td>0.4%</td><td>P3</td></tr>
+<tr><td>28</td><td>🌿 고요한 깊이</td><td>0.4%</td><td>P7</td></tr>
+</table>
+<p><b>도달 불가 타입: 없음.</b> 28개 타입 모두 0.1% 이상 출현. 최소 0.4%(꺼지지 않는 온기, 고요한 깊이).</p>
+
+<h3>v3.5 대비 개선 요약</h3>
+<table>
+<tr><th>지표</th><th>v3.5 (11개)</th><th>v4.0 (28개)</th><th>개선</th></tr>
+<tr><td><b>총 타입 수</b></td><td>11개</td><td style="color:#059669"><b>28개</b></td><td>+17개</td></tr>
+<tr><td><b>유저당 다양성 (10명 소개)</b></td><td>4.1개</td><td style="color:#059669"><b>5.9개</b></td><td>+44%</td></tr>
+<tr><td><b>1위 타입 집중도</b></td><td style="color:#DC2626">46.0%</td><td style="color:#059669"><b>33.5%</b></td><td>-12.5%p</td></tr>
+<tr><td><b>전체 1위 타입 비율</b></td><td>32.2% (프리즘)</td><td style="color:#059669"><b>9.7% (소리 없는 이끌림)</b></td><td>-22.5%p</td></tr>
+<tr><td><b>Fallback(프리즘) 비율</b></td><td style="color:#DC2626">32.2%</td><td style="color:#059669"><b>5.4%</b></td><td>-26.8%p</td></tr>
+</table>
+
+<h3>dominant별 체감 다양성</h3>
+<table>
+<tr><th>내 dominant</th><th>10명 중 고유타입</th><th>1위 집중도</th><th>Top 3 매칭 타입</th></tr>
+<tr><td><b>개방성</b></td><td>6.3개</td><td>30.3%</td><td>🌳뿌리깊은나무(13%), 🔭비전과현실(13%), 🎢다이내믹듀오(13%)</td></tr>
+<tr><td><b>성실성</b></td><td>6.5개</td><td>28.7%</td><td>⚓닻과돛(13%), 🔭비전과현실(13%), 🌳뿌리깊은나무(13%)</td></tr>
+<tr><td><b>외향성</b></td><td>5.6개</td><td>33.8%</td><td>⚓닻과돛(25%), 🔥스파크(13%), ☀️햇살과바람(13%)</td></tr>
+<tr><td><b>우호성</b></td><td>6.3개</td><td>30.0%</td><td>☀️햇살과바람(14%), 🏠따뜻한지붕(13%), 🌻설레는동행(13%)</td></tr>
+<tr><td><b>정서안정</b></td><td>6.3개</td><td>30.5%</td><td>⚓닻과돛(13%), 🌊파도와등대(13%), 🔥스파크(12%)</td></tr>
+<tr><td><b>애착안정</b></td><td>6.1개</td><td>31.8%</td><td>🎈마음놓는사이(13%), 🏗️함께짓는미래(13%), 🎐소리없는이끌림(12%)</td></tr>
+<tr><td><b>애착불안</b></td><td>5.1개</td><td>42.3%</td><td>🌸안아주는봄(24%), 🎐소리없는이끌림(12%), 🎢다이내믹듀오(12%)</td></tr>
+<tr><td><b>애착회피</b></td><td>5.1개</td><td>41.5%</td><td>🌙느린듯깊은사이(22%), 🎐소리없는이끌림(18%), 🪞데칼코마니(13%)</td></tr>
+</table>
+<p><b>해석:</b> 가장 다양한 축은 성실성(6.5개/10명), 가장 집중도가 높은 축은 애착불안(42.3%)이지만 v3.5의 53.6%에서 크게 개선됨. 우호성은 51.5%→30.0%로 가장 큰 개선.</p>
+
+<h2 id="sec2-4">2-4. 토탈 스코어 등급 (8단계)</h2>
+<p>토탈 스코어(0~100)에 따라 매칭 리포트에 표시되는 등급입니다.</p>
+<table>
+<tr><th>최소 점수</th><th>등급</th><th>색상</th><th>설명</th></tr>
+<tr><td><b>90</b></td><td>💎 운명적 공명</td><td>#E11D48</td><td>두 파동이 완벽하게 겹쳐 하나처럼 울립니다</td></tr>
+<tr><td><b>80</b></td><td>✨ 깊은 교감</td><td>#7C3AED</td><td>많은 부분에서 깊이 통하는 자연스러운 공명입니다</td></tr>
+<tr><td><b>70</b></td><td>🔥 자연스러운 조화</td><td>#2563EB</td><td>함께 있을 때 편안함이 느껴지는 궁합입니다</td></tr>
+<tr><td><b>60</b></td><td>🌊 좋은 흐름</td><td>#059669</td><td>서로를 보완하며 좋은 시너지를 만들어냅니다</td></tr>
+<tr><td><b>50</b></td><td>🌿 성장하는 관계</td><td>#16A34A</td><td>대화와 이해로 더 깊어질 잠재력이 있습니다</td></tr>
+<tr><td><b>40</b></td><td>🌀 탐색적 만남</td><td>#D97706</td><td>서로 다른 점을 발견하는 새로운 만남입니다</td></tr>
+<tr><td><b>25</b></td><td>🔮 다양성의 매력</td><td>#9333EA</td><td>다른 리듬이 만드는 새로운 가능성의 만남입니다</td></tr>
+<tr><td><b>0</b></td><td>⚡ 도전적 여정</td><td>#6B7280</td><td>서로 다른 세계를 가진 특별한 만남입니다</td></tr>
+</table>
+
+<h1 id="sec3">3. 결 해석 (Gyeol Interpretation)</h1>
 <p>각 개인의 성격 프로필 + 커플 종합 해석을 텍스트로 생성합니다.</p>
 
 <h2 id="sec3-1">3-1. 개인 프로필 생성 흐름</h2>
-<pre>Step 1) 모든 8축을 정규화(count / SLOT_COUNT)하여 내림차순 정렬 → top1, top2 결정
+<pre>Step 1) 모든 8축을 Z-score 정규화하여 내림차순 정렬 → top1, top2 결정
 Step 2) 3축 레벨(진폭/주파수/위상) 계산 → 사분면(Quadrant) 결정
         - ampLevel >= 6 → 에너지높음(H), < 6 → 낮음(L)
         - freqLevel <= 5 → 안정적(H),   > 5 → 변동적(L)
@@ -752,7 +1336,7 @@ Step 4) 3축 레벨별 10단계 설명 + 색상 해석 조합</pre>
 </table>
 
 <div style="text-align:center;margin:60px 0 40px;padding:30px;border-top:2px solid var(--accent);">
-<p style="color:#9ca3af;font-size:0.85rem;">결하다 기술명세서 v3.4 완전판 — 문서 끝</p>
+<p style="color:#9ca3af;font-size:0.85rem;">결하다 기술명세서 v4.0 완전판 — 문서 끝</p>
 </div>
 
 </div>
