@@ -55,6 +55,7 @@ tr:nth-child(even) td { background: #f9fafb; }
 <a href="#sec0">0. 사전 정의: 입력 데이터 구조 (SLOT_COUNT 포함)</a>
 <a href="#sec0-4">&nbsp;&nbsp;0-4. tagToAxis 전체 매핑 (50+개)</a>
 <a href="#sec0-5">&nbsp;&nbsp;0-5. 채점 시스템 (Total Score 산출)</a>
+<a href="#sec0-8">&nbsp;&nbsp;0-8. 24문항 전체 목록 (질문·선택지·태그·축 매핑)</a>
 <a href="#sec0-6">&nbsp;&nbsp;0-6. 정규화 보정: SLOT_COUNT → Z-score (v4.0 핵심 변경)</a>
 <a href="#sec0-7">&nbsp;&nbsp;0-7. 슬롯 불균형은 문제인가?</a>
 <a href="#sec1">1. 파동 표현 (Wave Visualization)</a>
@@ -239,6 +240,481 @@ rawScore = simScore × 0.42 + amplifiedCross × 0.15 + dynScore × 0.13 + prefSc
 // 5. 최종
 score = clamp(round(rawScore - criticalPenalty + crossBonus), 0, 100)</pre>
 
+
+<h2 id="sec0-8">0-8. 24문항 전체 목록 — 질문 · 선택지 · 태그 · 축 매핑</h2>
+
+<div class="note">
+<b>이 섹션의 목적:</b> 프론트엔드 개발자가 axes 카운트가 어떻게 산출되는지 <b>원본 데이터를 보고 직접 검증</b>할 수 있게 합니다.<br>
+24문항 × 4선택지 = <b>96개 태그</b>가 8축에 매핑되며, 사용자가 선택한 옵션의 태그를 해당 축에 1씩 카운트합니다.
+</div>
+
+<h3>카운팅 방식</h3>
+<pre>// 사용자가 Q1에서 3번("환경이 바뀌어도 적응하려고 노력하는 편이에요")을 선택하면:
+// → 태그: #개방성 → axes['개방성']++
+
+// 24문항 전부 이렇게 누적하면 최종 axes 완성
+questions.forEach(q => {
+    const selected = getUserAnswer(q.id);      // 사용자가 고른 선택지
+    const tag = selected.tag;                   // 예: '#개방성'
+    const axis = tagToAxis[tag];                // 예: '개방성'
+    axes[axis]++;                               // 카운트 +1
+});</pre>
+
+<h3>🧠 Reptilian (생존뇌)</h3>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q1. q_sleep</div>
+        <div>
+            <span class="badge" style="background:#3B82F620;color:#3B82F6">유사성</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Reptilian</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"잠자리 예민한 정도는 어떤 편이에요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>작은 소리나 빛에도 쉽게 깨는 예민한 편이에요.</td><td><code>#신경증</code></td><td><b style="color:#EF4444">애착불안</b></td></tr>
+    <tr><td>2</td><td>적당한 생활 소음이나 빛은 괜찮은 편이에요.</td><td><code>#정서안정</code></td><td><b style="color:#06B6D4">정서안정</b></td></tr>
+    <tr><td>3</td><td>환경이 바뀌어도 적응하려고 노력하는 편이에요.</td><td><code>#개방성</code></td><td><b style="color:#8B5CF6">개방성</b></td></tr>
+    <tr><td>4</td><td>머리만 대면 잠들 정도로 수면에 무던한 편이에요.</td><td><code>#정서안정</code></td><td><b style="color:#06B6D4">정서안정</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q2. q_rhythm</div>
+        <div>
+            <span class="badge" style="background:#3B82F620;color:#3B82F6">유사성</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Reptilian</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"선호하는 기상/취침 시간은 어떤 편이에요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>일찍 자고 일찍 일어나는 아침형이에요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>2</td><td>늦게 자고 늦게 일어나는 저녁형이에요.</td><td><code>#개방성</code></td><td><b style="color:#8B5CF6">개방성</b></td></tr>
+    <tr><td>3</td><td>상대방이나 상황에 따라 리듬을 맞출 수 있어요.</td><td><code>#우호성</code></td><td><b style="color:#10B981">우호성</b></td></tr>
+    <tr><td>4</td><td>정해진 시간 없이 유동적으로 자는 편이에요.</td><td><code>#개방성</code></td><td><b style="color:#8B5CF6">개방성</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q3. q_hygiene</div>
+        <div>
+            <span class="badge" style="background:#F59E0B20;color:#F59E0B">동적분석</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Reptilian</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"방바닥에 머리카락이 떨어져 있다면 어떻게 해요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>보이는 즉시 치워야 직성이 풀리는 편이에요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>2</td><td>정해진 시간에 규칙적으로 청소하는 편이에요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>3</td><td>평소엔 적당히 하고 주말에 몰아서 하는 편이에요.</td><td><code>#개방성</code></td><td><b style="color:#8B5CF6">개방성</b></td></tr>
+    <tr><td>4</td><td>생활에 지장 없으면 크게 신경 안 쓰는 편이에요.</td><td><code>#정서안정</code></td><td><b style="color:#06B6D4">정서안정</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q4. q_food</div>
+        <div>
+            <span class="badge" style="background:#3B82F620;color:#3B82F6">유사성</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Reptilian</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"데이트 맛집을 고를 때 어떤 편이에요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>새로운 음식이나 이색 맛집 탐방을 즐기는 편이에요.</td><td><code>#개방성</code></td><td><b style="color:#8B5CF6">개방성</b></td></tr>
+    <tr><td>2</td><td>맛이 보장된 단골집이나 검증된 곳을 선호해요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>3</td><td>종류를 가리지 않고 그날 기분에 따라 즐기는 편이에요.</td><td><code>#우호성</code></td><td><b style="color:#10B981">우호성</b></td></tr>
+    <tr><td>4</td><td>특별히 가리는 건 없고 상대방 선택을 따르는 편이에요.</td><td><code>#우호성</code></td><td><b style="color:#10B981">우호성</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q5. q_charge</div>
+        <div>
+            <span class="badge" style="background:#3B82F620;color:#3B82F6">유사성</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Reptilian</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"지친 하루 끝, 나만의 충전 방식은 어떤 편이에요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>집에서 혼자만의 시간을 가지며 에너지를 채워요.</td><td><code>#정서안정</code></td><td><b style="color:#06B6D4">정서안정</b></td></tr>
+    <tr><td>2</td><td>사람들을 만나 이야기하며 스트레스를 푸는 편이에요.</td><td><code>#외향성</code></td><td><b style="color:#F97316">외향성</b></td></tr>
+    <tr><td>3</td><td>같은 공간에서 각자 할 일을 하며 쉬는 게 좋아요.</td><td><code>#애착안정</code></td><td><b style="color:#6366F1">애착안정</b></td></tr>
+    <tr><td>4</td><td>운동이나 활동적인 취미로 에너지를 발산하는 편이에요.</td><td><code>#외향성</code></td><td><b style="color:#F97316">외향성</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q6. q_weekend</div>
+        <div>
+            <span class="badge" style="background:#3B82F620;color:#3B82F6">유사성</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Reptilian</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"이상적인 주말 데이트 스타일은 어떤 편이에요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>핫플레이스나 근교 여행 등 밖으로 나가는 걸 좋아해요.</td><td><code>#외향성</code></td><td><b style="color:#F97316">외향성</b></td></tr>
+    <tr><td>2</td><td>집에서 맛있는 것을 먹으며 푹 쉬는 걸 선호해요.</td><td><code>#정서안정</code></td><td><b style="color:#06B6D4">정서안정</b></td></tr>
+    <tr><td>3</td><td>하루는 외출, 하루는 휴식하며 균형을 맞추는 편이에요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>4</td><td>각자의 취미를 존중하며 따로 또 같이 보내는 편이에요.</td><td><code>#개방성</code></td><td><b style="color:#8B5CF6">개방성</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q7. q_plan</div>
+        <div>
+            <span class="badge" style="background:#3B82F620;color:#3B82F6">유사성</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Reptilian</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"여행 계획을 짤 때 어떤 편이에요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>동선과 시간을 꼼꼼하게 계획해서 움직이는 편이에요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>2</td><td>큰 틀은 짜되 세부 일정은 상황에 맞춰 조율해요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>3</td><td>발길 닿는 대로 자유롭게 다니는 즉흥파예요.</td><td><code>#개방성</code></td><td><b style="color:#8B5CF6">개방성</b></td></tr>
+    <tr><td>4</td><td>계획하기보단 상대방이 이끄는 대로 따르는 게 편해요.</td><td><code>#우호성</code></td><td><b style="color:#10B981">우호성</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q8. q_social_limit</div>
+        <div>
+            <span class="badge" style="background:#EF444420;color:#EF4444">가치관</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Reptilian</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"연인의 이성 친구, 어디까지 괜찮으세요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>이성 친구와 단둘이 만나는 건 이해하기 어려워요.</td><td><code>#애착불안</code></td><td><b style="color:#EF4444">애착불안</b></td></tr>
+    <tr><td>2</td><td>내가 아는 사람이거나 여럿이 만나는 건 괜찮아요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>3</td><td>늦은 밤 술자리만 아니라면 믿고 이해해 주는 편이에요.</td><td><code>#애착안정</code></td><td><b style="color:#6366F1">애착안정</b></td></tr>
+    <tr><td>4</td><td>각자의 사생활과 인간관계를 존중하고 관여 안 해요.</td><td><code>#애착회피</code></td><td><b style="color:#64748B">애착회피</b></td></tr>
+    </table>
+</div>
+<h3>❤️ Limbic (감정뇌)</h3>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q9. q_contact_style</div>
+        <div>
+            <span class="badge" style="background:#8B5CF620;color:#8B5CF6">상호보완</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Limbic</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"나의 연락 스타일은 어떤 편이에요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>일상을 실시간으로 공유하고 자주 연락하고 싶어요.</td><td><code>#애착불안</code></td><td><b style="color:#EF4444">애착불안</b></td></tr>
+    <tr><td>2</td><td>출퇴근이나 식사 등 주요 시점엔 꼭 연락하는 편이에요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>3</td><td>특별한 용건이 있거나 자기 전에만 통화하면 충분해요.</td><td><code>#애착회피</code></td><td><b style="color:#64748B">애착회피</b></td></tr>
+    <tr><td>4</td><td>서로 부담 없이 편할 때 연락하는 게 좋아요.</td><td><code>#애착안정</code></td><td><b style="color:#6366F1">애착안정</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q10. q_absence</div>
+        <div>
+            <span class="badge" style="background:#F59E0B20;color:#F59E0B">동적분석</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Limbic</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"연인이 3시간째 연락이 없어요. 어떻게 해요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>무슨 일 생긴 건 아닌지 걱정하며 기다리는 편이에요.</td><td><code>#애착안정</code></td><td><b style="color:#6366F1">애착안정</b></td></tr>
+    <tr><td>2</td><td>불안해서 수시로 핸드폰을 확인하는 편이에요.</td><td><code>#애착불안</code></td><td><b style="color:#EF4444">애착불안</b></td></tr>
+    <tr><td>3</td><td>메시지를 하나 남기고 내 할 일에 집중하는 편이에요.</td><td><code>#애착회피</code></td><td><b style="color:#64748B">애착회피</b></td></tr>
+    <tr><td>4</td><td>연락 올 때까지 나도 먼저 연락하지 않는 편이에요.</td><td><code>#애착회피</code></td><td><b style="color:#64748B">애착회피</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q11. q_expression</div>
+        <div>
+            <span class="badge" style="background:#8B5CF620;color:#8B5CF6">상호보완</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Limbic</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"사랑받는다고 느끼는 순간은 언제예요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>따뜻한 말과 구체적인 칭찬을 들을 때 행복해요.</td><td><code>#우호성</code></td><td><b style="color:#10B981">우호성</b></td></tr>
+    <tr><td>2</td><td>나를 위해 귀찮음을 감수하고 챙겨줄 때 감동해요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>3</td><td>눈을 맞추고 온전히 둘만의 시간을 보낼 때 충만해요.</td><td><code>#애착안정</code></td><td><b style="color:#6366F1">애착안정</b></td></tr>
+    <tr><td>4</td><td>손잡기, 포옹 등 따뜻한 체온이 닿을 때 안정돼요.</td><td><code>#외향성</code></td><td><b style="color:#F97316">외향성</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q12. q_empathy</div>
+        <div>
+            <span class="badge" style="background:#8B5CF620;color:#8B5CF6">상호보완</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Limbic</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"힘들 때 받고 싶은 위로는 어떤 건가요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>감정에 깊이 공감해주고 따뜻하게 위로해 주면 좋겠어요.</td><td><code>#우호성</code></td><td><b style="color:#10B981">우호성</b></td></tr>
+    <tr><td>2</td><td>현실적이고 구체적인 해결 방법을 제시해 주면 좋겠어요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>3</td><td>내 이야기를 끊지 않고 끝까지 들어주면 좋겠어요.</td><td><code>#애착안정</code></td><td><b style="color:#6366F1">애착안정</b></td></tr>
+    <tr><td>4</td><td>말없이 곁에 있어주거나 기분 전환을 도와주면 좋겠어요.</td><td><code>#우호성</code></td><td><b style="color:#10B981">우호성</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q13. q_anger</div>
+        <div>
+            <span class="badge" style="background:#F59E0B20;color:#F59E0B">동적분석</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Limbic</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"연인과 의견 충돌이 있을 때 어떻게 하는 편이에요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>할 말은 해야 해요. 그 자리에서 바로 이야기하는 편이에요.</td><td><code>#외향성</code></td><td><b style="color:#F97316">외향성</b></td></tr>
+    <tr><td>2</td><td>감정이 격해지면 실수할까 봐 잠시 대화를 멈추는 편이에요.</td><td><code>#정서안정</code></td><td><b style="color:#06B6D4">정서안정</b></td></tr>
+    <tr><td>3</td><td>감정적 호소보다는 논리적으로 따지는 편이에요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>4</td><td>싸우는 상황 자체가 싫어서 자리를 피하는 편이에요.</td><td><code>#애착회피</code></td><td><b style="color:#64748B">애착회피</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q14. q_reconciliation</div>
+        <div>
+            <span class="badge" style="background:#F59E0B20;color:#F59E0B">동적분석</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Limbic</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"싸움 후 냉전을 끝내고 싶을 때 어떻게 해요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>"우리 얘기 좀 해" 하며 먼저 대화를 시도하는 편이에요.</td><td><code>#애착안정</code></td><td><b style="color:#6366F1">애착안정</b></td></tr>
+    <tr><td>2</td><td>애교를 부리거나 장난을 치며 분위기를 푸는 편이에요.</td><td><code>#우호성</code></td><td><b style="color:#10B981">우호성</b></td></tr>
+    <tr><td>3</td><td>좋아하는 음식을 사오거나 선물을 건네는 편이에요.</td><td><code>#외향성</code></td><td><b style="color:#F97316">외향성</b></td></tr>
+    <tr><td>4</td><td>상대 기분이 풀릴 때까지 조용히 기다리는 편이에요.</td><td><code>#애착회피</code></td><td><b style="color:#64748B">애착회피</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q15. q_conflict_need</div>
+        <div>
+            <span class="badge" style="background:#8B5CF620;color:#8B5CF6">상호보완</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Limbic</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"싸운 후 상대에게 바라는 반응은 어떤 건가요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>먼저 다가와서 대화를 시도해 줬으면 좋겠어요.</td><td><code>#애착안정</code></td><td><b style="color:#6366F1">애착안정</b></td></tr>
+    <tr><td>2</td><td>시간을 주고 기다려 줬으면 좋겠어요.</td><td><code>#정서안정</code></td><td><b style="color:#06B6D4">정서안정</b></td></tr>
+    <tr><td>3</td><td>스킨십이나 행동으로 풀어줬으면 좋겠어요.</td><td><code>#외향성</code></td><td><b style="color:#F97316">외향성</b></td></tr>
+    <tr><td>4</td><td>아무렇지 않게 평소처럼 대해 줬으면 좋겠어요.</td><td><code>#애착회피</code></td><td><b style="color:#64748B">애착회피</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q16. q_apology</div>
+        <div>
+            <span class="badge" style="background:#8B5CF620;color:#8B5CF6">상호보완</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Limbic</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"진정한 사과라고 느끼는 건 어떤 건가요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>진심이 담긴 사과의 말과 눈빛이 중요해요.</td><td><code>#우호성</code></td><td><b style="color:#10B981">우호성</b></td></tr>
+    <tr><td>2</td><td>앞으로의 다짐과 구체적인 행동 변화를 보여주는 거예요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>3</td><td>내 입장을 끝까지 들어주고 공감해 주는 태도예요.</td><td><code>#애착안정</code></td><td><b style="color:#6366F1">애착안정</b></td></tr>
+    <tr><td>4</td><td>기분 전환을 위한 선물이나 맛있는 음식으로 풀어주는 거예요.</td><td><code>#외향성</code></td><td><b style="color:#F97316">외향성</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q17. q_argument</div>
+        <div>
+            <span class="badge" style="background:#3B82F620;color:#3B82F6">유사성</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Limbic</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"논쟁 중 상대가 말실수를 했다면 어떻게 해요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>잘못된 부분을 짚어주며 논리적으로 반박하는 편이에요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>2</td><td>상대의 의도가 무엇인지 차분하게 물어보는 편이에요.</td><td><code>#애착안정</code></td><td><b style="color:#6366F1">애착안정</b></td></tr>
+    <tr><td>3</td><td>농담으로 가볍게 넘기며 분위기를 푸는 편이에요.</td><td><code>#외향성</code></td><td><b style="color:#F97316">외향성</b></td></tr>
+    <tr><td>4</td><td>마음에 상처를 입고 말을 멈추게 되는 편이에요.</td><td><code>#애착불안</code></td><td><b style="color:#EF4444">애착불안</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q18. q_dealbreaker</div>
+        <div>
+            <span class="badge" style="background:#EF444420;color:#EF4444">가치관</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Limbic</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"도저히 참을 수 없는 이별 사유는 어떤 건가요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>거짓말이나 외도 등 신뢰를 깨뜨리는 행동이에요.</td><td><code>#애착안정</code></td><td><b style="color:#6366F1">애착안정</b></td></tr>
+    <tr><td>2</td><td>욕설이나 비하 등 존중하지 않는 태도와 폭력이에요.</td><td><code>#우호성</code></td><td><b style="color:#10B981">우호성</b></td></tr>
+    <tr><td>3</td><td>대화가 통하지 않고 정서적 교감이 단절되는 거예요.</td><td><code>#애착불안</code></td><td><b style="color:#EF4444">애착불안</b></td></tr>
+    <tr><td>4</td><td>경제적 무능력이나 도박, 과도한 채무 문제예요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    </table>
+</div>
+<h3>💡 Neocortex (이성뇌)</h3>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q19. q_finance</div>
+        <div>
+            <span class="badge" style="background:#3B82F620;color:#3B82F6">유사성</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Neocortex</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"예상치 못한 목돈이 생기면 어떻게 하는 편이에요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>주식, 코인 등 기대 수익이 높은 곳에 과감히 투자해요.</td><td><code>#개방성</code></td><td><b style="color:#8B5CF6">개방성</b></td></tr>
+    <tr><td>2</td><td>원금이 보장되는 예금이나 적금에 안전하게 넣어둬요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>3</td><td>안전 자산과 투자 자산에 나눠서 관리하는 편이에요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>4</td><td>나를 위한 선물이나 여행 등 값진 경험에 써요.</td><td><code>#외향성</code></td><td><b style="color:#F97316">외향성</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q20. q_manage</div>
+        <div>
+            <span class="badge" style="background:#3B82F620;color:#3B82F6">유사성</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Neocortex</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"결혼 후 수입 관리는 어떻게 하고 싶으세요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>각자 수입을 관리하고 생활비만 공동 부담하고 싶어요.</td><td><code>#개방성</code></td><td><b style="color:#8B5CF6">개방성</b></td></tr>
+    <tr><td>2</td><td>한 사람이 전담 관리하고 용돈을 받아 쓰고 싶어요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>3</td><td>수입을 모두 합치고 지출 계획을 함께 의논하고 싶어요.</td><td><code>#애착안정</code></td><td><b style="color:#6366F1">애착안정</b></td></tr>
+    <tr><td>4</td><td>공동 통장에 생활비를 넣고 나머지는 각자 자유롭게 쓰고 싶어요.</td><td><code>#정서안정</code></td><td><b style="color:#06B6D4">정서안정</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q21. q_kids</div>
+        <div>
+            <span class="badge" style="background:#EF444420;color:#EF4444">가치관</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Neocortex</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"자녀 계획은 어떻게 생각하세요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>자녀는 행복한 가정에 꼭 필요하다고 생각해요.</td><td><code>#우호성</code></td><td><b style="color:#10B981">우호성</b></td></tr>
+    <tr><td>2</td><td>자녀 없이 부부 둘만의 삶을 즐기고 싶어요.</td><td><code>#개방성</code></td><td><b style="color:#8B5CF6">개방성</b></td></tr>
+    <tr><td>3</td><td>있으면 좋지만 없어도 둘이 충분히 행복할 수 있어요.</td><td><code>#정서안정</code></td><td><b style="color:#06B6D4">정서안정</b></td></tr>
+    <tr><td>4</td><td>아이 대신 반려동물과 함께하는 삶을 선호해요.</td><td><code>#개방성</code></td><td><b style="color:#8B5CF6">개방성</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q22. q_parenting</div>
+        <div>
+            <span class="badge" style="background:#3B82F620;color:#3B82F6">유사성</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Neocortex</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"선호하는 훈육 스타일은 어떤 편이에요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>예의범절과 규율을 중시하며 엄격하게 키우고 싶어요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>2</td><td>아이의 자유를 존중하며 편하게 키우고 싶어요.</td><td><code>#개방성</code></td><td><b style="color:#8B5CF6">개방성</b></td></tr>
+    <tr><td>3</td><td>기본 원칙은 지키되 아이의 자율성을 존중하고 싶어요.</td><td><code>#애착안정</code></td><td><b style="color:#6366F1">애착안정</b></td></tr>
+    <tr><td>4</td><td>재능 계발과 학업 성취를 적극적으로 지원하고 싶어요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q23. q_religion</div>
+        <div>
+            <span class="badge" style="background:#EF444420;color:#EF4444">가치관</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Neocortex</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"종교 활동에 대해서는 어떻게 생각하세요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>부부가 같은 종교를 갖고 함께 활동하는 게 중요해요.</td><td><code>#우호성</code></td><td><b style="color:#10B981">우호성</b></td></tr>
+    <tr><td>2</td><td>종교가 달라도 서로의 믿음을 존중하면 괜찮아요.</td><td><code>#개방성</code></td><td><b style="color:#8B5CF6">개방성</b></td></tr>
+    <tr><td>3</td><td>둘 다 종교 활동에 얽매이지 않았으면 좋겠어요.</td><td><code>#개방성</code></td><td><b style="color:#8B5CF6">개방성</b></td></tr>
+    <tr><td>4</td><td>상대가 종교에 지나치게 심취하면 부담스러워요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    </table>
+</div>
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:0.95rem;">Q24. q_retirement</div>
+        <div>
+            <span class="badge" style="background:#3B82F620;color:#3B82F6">유사성</span>
+            <span class="badge" style="background:#f1f5f9;color:#6b7280;">Neocortex</span>
+        </div>
+    </div>
+    <div style="font-size:0.95rem;margin-bottom:10px;font-weight:500;">"은퇴 후 꿈꾸는 삶은 어떤 모습이에요?"</div>
+    <table style="margin:0;font-size:0.85rem;">
+    <tr><th style="width:30px;">#</th><th>선택지 텍스트</th><th style="width:100px;">태그</th><th style="width:70px;">→ 축</th></tr>
+    <tr><td>1</td><td>공기 좋은 한적한 곳에서 전원생활을 즐기고 싶어요.</td><td><code>#정서안정</code></td><td><b style="color:#06B6D4">정서안정</b></td></tr>
+    <tr><td>2</td><td>편의시설이 갖춰진 도심에서 문화생활을 즐기고 싶어요.</td><td><code>#외향성</code></td><td><b style="color:#F97316">외향성</b></td></tr>
+    <tr><td>3</td><td>도시와 자연이 어우러진 근교에서 살고 싶어요.</td><td><code>#성실성</code></td><td><b style="color:#3B82F6">성실성</b></td></tr>
+    <tr><td>4</td><td>낯선 해외에서 살아보거나 이민을 가보고 싶어요.</td><td><code>#개방성</code></td><td><b style="color:#8B5CF6">개방성</b></td></tr>
+    </table>
+</div>
+<h3>축별 태그 집계 (96개)</h3>
+<p>위 24문항 × 4선택지를 축별로 카운트한 결과입니다. 이 값이 곧 <b>SLOT_COUNT</b>이며, Z-score 정규화의 기초 데이터입니다.</p>
+<table>
+<tr><th>축</th><th>실제 태그 수</th><th>v3.4 구값</th><th>차이</th><th>해당 문항 (축이 등장하는 질문)</th></tr>
+<tr><td><b style="color:#8B5CF6">개방성</b></td><td><b>15</b></td><td>12</td><td><span style="color:#DC2626">+3 ❌</span></td><td style="font-size:0.8rem;">Q1, Q2, Q3, Q4, Q6, Q7, Q19, Q20, Q21, Q22, Q23, Q24</td></tr>
+<tr><td><b style="color:#3B82F6">성실성</b></td><td><b>22</b></td><td>18</td><td><span style="color:#DC2626">+4 ❌</span></td><td style="font-size:0.8rem;">Q2, Q3, Q4, Q6, Q7, Q8, Q9, Q11, Q12, Q13, Q16, Q17, Q18, Q19, Q20, Q22, Q23, Q24</td></tr>
+<tr><td><b style="color:#F97316">외향성</b></td><td><b>11</b></td><td>10</td><td><span style="color:#DC2626">+1 ❌</span></td><td style="font-size:0.8rem;">Q5, Q6, Q11, Q13, Q14, Q15, Q16, Q17, Q19, Q24</td></tr>
+<tr><td><b style="color:#10B981">우호성</b></td><td><b>12</b></td><td>10</td><td><span style="color:#DC2626">+2 ❌</span></td><td style="font-size:0.8rem;">Q2, Q4, Q7, Q11, Q12, Q14, Q16, Q18, Q21, Q23</td></tr>
+<tr><td><b style="color:#06B6D4">정서안정</b></td><td><b>10</b></td><td>9</td><td><span style="color:#DC2626">+1 ❌</span></td><td style="font-size:0.8rem;">Q1, Q3, Q5, Q6, Q13, Q15, Q20, Q21, Q24</td></tr>
+<tr><td><b style="color:#6366F1">애착안정</b></td><td><b>13</b></td><td>13</td><td><span style="color:#059669">0 ✅</span></td><td style="font-size:0.8rem;">Q5, Q8, Q9, Q10, Q11, Q12, Q14, Q15, Q16, Q17, Q18, Q20, Q22</td></tr>
+<tr><td><b style="color:#EF4444">애착불안</b></td><td><b>6</b></td><td>6</td><td><span style="color:#059669">0 ✅</span></td><td style="font-size:0.8rem;">Q1, Q8, Q9, Q10, Q17, Q18</td></tr>
+<tr><td><b style="color:#64748B">애착회피</b></td><td><b>7</b></td><td>6</td><td><span style="color:#DC2626">+1 ❌</span></td><td style="font-size:0.8rem;">Q8, Q9, Q10, Q13, Q14, Q15</td></tr>
+<tr style="border-top:2px solid #1e3a5f;"><td><b>합계</b></td><td><b>96</b></td><td>84</td><td><span style="color:#DC2626">+12</span></td><td></td></tr>
+</table>
+
+<div class="note">
+<b>왜 v3.4에서 84였나?</b><br>
+v3.3까지 일부 태그가 이중카운팅되는 코드가 있었고, SLOT_COUNT를 그 기준(유효 슬롯=84개)에 맞췄습니다.<br>
+v3.4에서 이중카운팅 버그를 제거했지만, SLOT_COUNT 상수를 업데이트하지 않았습니다.<br>
+v4.0에서 실제 태그 수 96개에 맞추고, 동시에 Z-score 정규화로 전환했습니다.<br>
+<b>질문·답변·태그 자체는 v3.3부터 v4.0까지 한 번도 변경된 적 없습니다.</b>
+</div>
+
+<h3>태그 → 축 매핑 검증 예시</h3>
+<pre>// 예시: 어떤 사용자가 24문항에 아래와 같이 답했다면
+Q1: 3번 (#개방성 → 개방성++)
+Q2: 1번 (#성실성 → 성실성++)
+Q3: 2번 (#성실성 → 성실성++)
+Q4: 1번 (#개방성 → 개방성++)
+...
+Q24: 4번 (#개방성 → 개방성++)
+
+// 최종 axes 결과
+axes = {
+    개방성: 5,     // Q1,Q4,...에서 개방성 태그를 골랐을 때 누적
+    성실성: 8,     // Q2,Q3,...에서 성실성 태그를 골랐을 때 누적
+    외향성: 2,
+    우호성: 3,
+    정서안정: 2,
+    애착안정: 3,
+    애착불안: 1,
+    애착회피: 0
+}
+// 합계 = 24 (1인당 반드시 24개, 문항당 1개씩 선택)</pre>
 
 <h2 id="sec0-6"><span id="sec0-6"></span>0-6. 정규화 보정: SLOT_COUNT → Z-score (v4.0 핵심 변경)</h2>
 
@@ -743,7 +1219,7 @@ function getDominantTrait(axes) {
 }</pre>
 
 <h3>getMatchType 함수 전체 (28개 타입, 그대로 복사 가능)</h3>
-<p><b>입력:</b> maleAxes, femaleAxes (8축 카운트 객체) &nbsp;|&nbsp; <b>출력:</b> { title, sub, icon, tags, desc, color, borderColor }</p>
+<p><b>입력:</b> maleAxes, femaleAxes (8축 카운트 객체) &nbsp;|&nbsp; <b>출력:</b> { title, subtitle, icon, tags, desc, color, borderColor }</p>
 <pre>function getMatchType(maleAxes, femaleAxes) {
     const mDom = getDominantTrait(maleAxes);
     const fDom = getDominantTrait(femaleAxes);
@@ -775,21 +1251,21 @@ function getDominantTrait(axes) {
     // ════ P1. 유사성 (4개) ════
     if (mDom === fDom) {
         if (mDom === '애착불안' || mDom === '애착회피')
-            return { title: '🪞 영혼의 데칼코마니', sub: 'MIRROR IMAGE', icon: '👯',
+            return { title: '🪞 영혼의 데칼코마니', subtitle: 'MIRROR IMAGE', icon: '👯',
                      tags: ['#도플갱어','#소울메이트','#이심전심'],
                      desc: '말하지 않아도 통하는 거울 같은 사이',
                      color: '#6366F1', borderColor: '#C7D2FE' };
         if (mDom === '외향성' || mDom === '정서안정')
-            return { title: '🔥 열정의 스파크', sub: 'PASSIONATE SOULS', icon: '🎆',
+            return { title: '🔥 열정의 스파크', subtitle: 'PASSIONATE SOULS', icon: '🎆',
                      tags: ['#에너지폭발','#환상의콤비','#지루할틈없음'],
                      desc: '함께하면 세상이 두 배로 즐거운 열정 커플',
                      color: '#F97316', borderColor: '#FED7AA' };
         if (mDom === '우호성' || mDom === '애착안정')
-            return { title: '🧸 포근한 솜이불', sub: 'WARM EMBRACE', icon: '🧶',
+            return { title: '🧸 포근한 솜이불', subtitle: 'WARM EMBRACE', icon: '🧶',
                      tags: ['#힐링','#배려왕','#따뜻함'],
                      desc: '바라만 봐도 마음이 놓이는 치유의 관계',
                      color: '#EAB308', borderColor: '#FDE047' };
-        return { title: '🌳 뿌리 깊은 나무', sub: 'DEEP ROOTS', icon: '🏞️',
+        return { title: '🌳 뿌리 깊은 나무', subtitle: 'DEEP ROOTS', icon: '🏞️',
                  tags: ['#안정감','#신뢰','#평온함'],
                  desc: '서로에게 가장 든든한 안식처가 되어주는 관계',
                  color: '#059669', borderColor: '#A7F3D0' };
@@ -797,51 +1273,51 @@ function getDominantTrait(axes) {
 
     // ════ P2. 상호보완 (8개) ════
     if ((mDom==='외향성' &amp;&amp; ['정서안정','성실성'].includes(fDom)) || (fDom==='외향성' &amp;&amp; ['정서안정','성실성'].includes(mDom)))
-        return { title: '⚓ 닻과 돛', sub: 'ANCHOR &amp; SAIL', icon: '⛵', tags: ['#균형','#이끌어줌','#받쳐줌'], desc: '나아갈 힘과 머무를 곳이 되어주는 조화', color: '#0EA5E9', borderColor: '#BAE6FD' };
+        return { title: '⚓ 닻과 돛', subtitle: 'ANCHOR &amp; SAIL', icon: '⛵', tags: ['#균형','#이끌어줌','#받쳐줌'], desc: '나아갈 힘과 머무를 곳이 되어주는 조화', color: '#0EA5E9', borderColor: '#BAE6FD' };
     if ((mDom==='개방성' &amp;&amp; fDom==='성실성') || (mDom==='성실성' &amp;&amp; fDom==='개방성'))
-        return { title: '🔭 비전과 현실', sub: 'DREAM &amp; REALITY', icon: '🚀', tags: ['#상호보완','#최강팀워크','#성장'], desc: '꿈을 꾸고 현실로 만드는 완벽한 파트너십', color: '#3B82F6', borderColor: '#BFDBFE' };
+        return { title: '🔭 비전과 현실', subtitle: 'DREAM &amp; REALITY', icon: '🚀', tags: ['#상호보완','#최강팀워크','#성장'], desc: '꿈을 꾸고 현실로 만드는 완벽한 파트너십', color: '#3B82F6', borderColor: '#BFDBFE' };
     if ((mDom==='우호성' &amp;&amp; fDom==='외향성') || (mDom==='외향성' &amp;&amp; fDom==='우호성'))
-        return { title: '☀️ 햇살과 바람', sub: 'SUNSHINE &amp; BREEZE', icon: '🌤️', tags: ['#활기','#다정함','#인기커플'], desc: '밝은 에너지와 따뜻한 배려가 함께하는 커플', color: '#F59E0B', borderColor: '#FDE68A' };
+        return { title: '☀️ 햇살과 바람', subtitle: 'SUNSHINE &amp; BREEZE', icon: '🌤️', tags: ['#활기','#다정함','#인기커플'], desc: '밝은 에너지와 따뜻한 배려가 함께하는 커플', color: '#F59E0B', borderColor: '#FDE68A' };
     if ((mDom==='우호성' &amp;&amp; fDom==='성실성') || (mDom==='성실성' &amp;&amp; fDom==='우호성'))
-        return { title: '🏠 따뜻한 지붕', sub: 'WARM ROOF', icon: '🏡', tags: ['#가정적','#안정','#화목'], desc: '규칙과 따뜻한 정이 어우러진 모범 가정', color: '#10B981', borderColor: '#A7F3D0' };
+        return { title: '🏠 따뜻한 지붕', subtitle: 'WARM ROOF', icon: '🏡', tags: ['#가정적','#안정','#화목'], desc: '규칙과 따뜻한 정이 어우러진 모범 가정', color: '#10B981', borderColor: '#A7F3D0' };
     if ((mDom==='개방성' &amp;&amp; fDom==='정서안정') || (mDom==='정서안정' &amp;&amp; fDom==='개방성'))
-        return { title: '🌊 파도와 등대', sub: 'WAVE &amp; LIGHTHOUSE', icon: '🏖️', tags: ['#자유','#안전','#도전'], desc: '모험하는 마음을 든든히 지켜주는 관계', color: '#06B6D4', borderColor: '#CFFAFE' };
+        return { title: '🌊 파도와 등대', subtitle: 'WAVE &amp; LIGHTHOUSE', icon: '🏖️', tags: ['#자유','#안전','#도전'], desc: '모험하는 마음을 든든히 지켜주는 관계', color: '#06B6D4', borderColor: '#CFFAFE' };
     if ((mDom==='개방성' &amp;&amp; fDom==='우호성') || (mDom==='우호성' &amp;&amp; fDom==='개방성'))
-        return { title: '🌻 설레는 동행', sub: 'EXCITING COMPANION', icon: '🤝', tags: ['#탐험','#공감','#동행'], desc: '새로운 세상을 향한 호기심에 따뜻한 공감이 함께하는 관계', color: '#8B5CF6', borderColor: '#DDD6FE' };
+        return { title: '🌻 설레는 동행', subtitle: 'EXCITING COMPANION', icon: '🤝', tags: ['#탐험','#공감','#동행'], desc: '새로운 세상을 향한 호기심에 따뜻한 공감이 함께하는 관계', color: '#8B5CF6', borderColor: '#DDD6FE' };
     if ((mDom==='애착안정' &amp;&amp; fDom==='외향성') || (mDom==='외향성' &amp;&amp; fDom==='애착안정'))
-        return { title: '🎈 마음 놓는 사이', sub: 'CAREFREE BOND', icon: '🎉', tags: ['#활력','#신뢰','#자유로움'], desc: '편안한 신뢰 위에서 마음껏 에너지를 발산할 수 있는 관계', color: '#7C3AED', borderColor: '#DDD6FE' };
+        return { title: '🎈 마음 놓는 사이', subtitle: 'CAREFREE BOND', icon: '🎉', tags: ['#활력','#신뢰','#자유로움'], desc: '편안한 신뢰 위에서 마음껏 에너지를 발산할 수 있는 관계', color: '#7C3AED', borderColor: '#DDD6FE' };
     if ((mDom==='애착안정' &amp;&amp; fDom==='성실성') || (mDom==='성실성' &amp;&amp; fDom==='애착안정'))
-        return { title: '🏗️ 함께 짓는 미래', sub: 'BUILDING TOGETHER', icon: '📋', tags: ['#신뢰','#계획','#미래'], desc: '깊은 신뢰와 꼼꼼한 계획으로 미래를 함께 설계하는 관계', color: '#2563EB', borderColor: '#BFDBFE' };
+        return { title: '🏗️ 함께 짓는 미래', subtitle: 'BUILDING TOGETHER', icon: '📋', tags: ['#신뢰','#계획','#미래'], desc: '깊은 신뢰와 꼼꼼한 계획으로 미래를 함께 설계하는 관계', color: '#2563EB', borderColor: '#BFDBFE' };
 
     // ════ P3. 3축 기반 (5개) ════
     if (phaseGap &gt;= 4) {
-        if (avgAmp &gt;= 6) return { title: '🧲 이끄는 자와 받쳐주는 자', sub: 'LEAD &amp; SUPPORT', icon: '🤝', tags: ['#역할분담','#시너지','#자연스러움'], desc: '한 사람이 이끌고 한 사람이 받쳐주는 완벽한 호흡', color: '#7C3AED', borderColor: '#DDD6FE' };
-        return { title: '🎐 소리 없는 이끌림', sub: 'SILENT ATTRACTION', icon: '🫶', tags: ['#차분한리드','#섬세함','#자연스러움'], desc: '말 없이도 서로의 역할이 자연스럽게 맞물리는 관계', color: '#475569', borderColor: '#CBD5E1' };
+        if (avgAmp &gt;= 6) return { title: '🧲 이끄는 자와 받쳐주는 자', subtitle: 'LEAD &amp; SUPPORT', icon: '🤝', tags: ['#역할분담','#시너지','#자연스러움'], desc: '한 사람이 이끌고 한 사람이 받쳐주는 완벽한 호흡', color: '#7C3AED', borderColor: '#DDD6FE' };
+        return { title: '🎐 소리 없는 이끌림', subtitle: 'SILENT ATTRACTION', icon: '🫶', tags: ['#차분한리드','#섬세함','#자연스러움'], desc: '말 없이도 서로의 역할이 자연스럽게 맞물리는 관계', color: '#475569', borderColor: '#CBD5E1' };
     }
-    if (avgFreq &lt;= 3 &amp;&amp; avgAmp &lt;= 5) return { title: '🏰 견고한 성벽', sub: 'SOLID CASTLE', icon: '🛡️', tags: ['#철벽방어','#미래지향','#계획적'], desc: '흔들림 없는 리듬으로 미래를 쌓아가는 전략가들', color: '#4B5563', borderColor: '#E5E7EB' };
-    if (avgFreq &lt;= 3 &amp;&amp; avgAmp &gt; 5) return { title: '🕯️ 꺼지지 않는 온기', sub: 'EVERLASTING WARMTH', icon: '☕', tags: ['#안정','#온기','#든든함'], desc: '안정적인 리듬 위에 따뜻한 에너지가 늘 감도는 관계', color: '#0369A1', borderColor: '#BAE6FD' };
-    if (avgAmp &gt;= 7) return { title: '🎢 다이내믹 듀오', sub: 'DYNAMIC DUO', icon: '🎡', tags: ['#모험','#스릴','#활력'], desc: '함께하면 에너지가 두 배, 매일이 새로운 커플', color: '#EF4444', borderColor: '#FECACA' };
+    if (avgFreq &lt;= 3 &amp;&amp; avgAmp &lt;= 5) return { title: '🏰 견고한 성벽', subtitle: 'SOLID CASTLE', icon: '🛡️', tags: ['#철벽방어','#미래지향','#계획적'], desc: '흔들림 없는 리듬으로 미래를 쌓아가는 전략가들', color: '#4B5563', borderColor: '#E5E7EB' };
+    if (avgFreq &lt;= 3 &amp;&amp; avgAmp &gt; 5) return { title: '🕯️ 꺼지지 않는 온기', subtitle: 'EVERLASTING WARMTH', icon: '☕', tags: ['#안정','#온기','#든든함'], desc: '안정적인 리듬 위에 따뜻한 에너지가 늘 감도는 관계', color: '#0369A1', borderColor: '#BAE6FD' };
+    if (avgAmp &gt;= 7) return { title: '🎢 다이내믹 듀오', subtitle: 'DYNAMIC DUO', icon: '🎡', tags: ['#모험','#스릴','#활력'], desc: '함께하면 에너지가 두 배, 매일이 새로운 커플', color: '#EF4444', borderColor: '#FECACA' };
 
     // ════ P4. 애착 조합 (3개) ════
-    if (atCombo === 'anxious-avoidant') return { title: '💫 강렬한 끌림', sub: 'INTENSE ATTRACTION', icon: '🧲', tags: ['#끌림','#긴장감','#성장'], desc: '서로 다른 리듬이 만들어내는 강한 이끌림의 관계', color: '#EC4899', borderColor: '#FBCFE8' };
-    if (atCombo === 'anxious-secure') return { title: '🌸 안아주는 봄', sub: 'EMBRACING SPRING', icon: '🌷', tags: ['#치유','#포용','#안심'], desc: '풍부한 감성을 든든히 안아주는 따뜻한 관계', color: '#F43F5E', borderColor: '#FECDD3' };
-    if (atCombo === 'avoidant-secure') return { title: '🌙 느린 듯 깊은 사이', sub: 'SLOWLY DEEPER', icon: '🌛', tags: ['#존중','#여유','#신뢰'], desc: '각자의 속도를 존중하며 천천히 깊어지는 관계', color: '#6366F1', borderColor: '#C7D2FE' };
+    if (atCombo === 'anxious-avoidant') return { title: '💫 강렬한 끌림', subtitle: 'INTENSE ATTRACTION', icon: '🧲', tags: ['#끌림','#긴장감','#성장'], desc: '서로 다른 리듬이 만들어내는 강한 이끌림의 관계', color: '#EC4899', borderColor: '#FBCFE8' };
+    if (atCombo === 'anxious-secure') return { title: '🌸 안아주는 봄', subtitle: 'EMBRACING SPRING', icon: '🌷', tags: ['#치유','#포용','#안심'], desc: '풍부한 감성을 든든히 안아주는 따뜻한 관계', color: '#F43F5E', borderColor: '#FECDD3' };
+    if (atCombo === 'avoidant-secure') return { title: '🌙 느린 듯 깊은 사이', subtitle: 'SLOWLY DEEPER', icon: '🌛', tags: ['#존중','#여유','#신뢰'], desc: '각자의 속도를 존중하며 천천히 깊어지는 관계', color: '#6366F1', borderColor: '#C7D2FE' };
 
     // ════ P5. 조화도 (3개) ════
     if (ampGap &lt;= 2 &amp;&amp; freqGap &lt;= 2 &amp;&amp; phaseGap &lt;= 2) {
-        if (avgAmp &gt;= 6) return { title: '💎 빛나는 원석', sub: 'SHINING GEM', icon: '💍', tags: ['#삼박자','#조화','#찰떡궁합'], desc: '에너지, 리듬, 역할 모두 맞아 빛나는 만남', color: '#EC4899', borderColor: '#FBCFE8' };
-        if (avgFreq &lt;= 5) return { title: '🍵 편안한 하모니', sub: 'EASY HARMONY', icon: '☕', tags: ['#평온','#조화','#편안함'], desc: '힘 빼지 않아도 자연스럽게 맞는 편안한 관계', color: '#059669', borderColor: '#A7F3D0' };
-        return { title: '💓 설레는 하모니', sub: 'FLUTTERING HARMONY', icon: '🎵', tags: ['#감성','#공명','#설렘'], desc: '풍부한 감정이 같은 리듬으로 함께 뛰는 관계', color: '#A855F7', borderColor: '#E9D5FF' };
+        if (avgAmp &gt;= 6) return { title: '💎 빛나는 원석', subtitle: 'SHINING GEM', icon: '💍', tags: ['#삼박자','#조화','#찰떡궁합'], desc: '에너지, 리듬, 역할 모두 맞아 빛나는 만남', color: '#EC4899', borderColor: '#FBCFE8' };
+        if (avgFreq &lt;= 5) return { title: '🍵 편안한 하모니', subtitle: 'EASY HARMONY', icon: '☕', tags: ['#평온','#조화','#편안함'], desc: '힘 빼지 않아도 자연스럽게 맞는 편안한 관계', color: '#059669', borderColor: '#A7F3D0' };
+        return { title: '💓 설레는 하모니', subtitle: 'FLUTTERING HARMONY', icon: '🎵', tags: ['#감성','#공명','#설렘'], desc: '풍부한 감정이 같은 리듬으로 함께 뛰는 관계', color: '#A855F7', borderColor: '#E9D5FF' };
     }
 
     // ════ P6. 2순위 기반 (2개) ════
-    if (mT2 === fT2) return { title: '🔮 발견하는 닮은꼴', sub: 'DISCOVERING ALIKE', icon: '✨', tags: ['#닮은꼴','#깊은연결','#설렘'], desc: '알아갈수록 닮은 점을 발견하는 설렘', color: '#7C3AED', borderColor: '#DDD6FE' };
-    if (mT2 === fDom || fT2 === mDom) return { title: '🧩 맞물리는 퍼즐', sub: 'PERFECT FIT', icon: '🧩', tags: ['#퍼즐','#보완','#재발견'], desc: '서로의 숨겨진 면이 상대의 중심과 딱 맞물리는 관계', color: '#0891B2', borderColor: '#CFFAFE' };
+    if (mT2 === fT2) return { title: '🔮 발견하는 닮은꼴', subtitle: 'DISCOVERING ALIKE', icon: '✨', tags: ['#닮은꼴','#깊은연결','#설렘'], desc: '알아갈수록 닮은 점을 발견하는 설렘', color: '#7C3AED', borderColor: '#DDD6FE' };
+    if (mT2 === fDom || fT2 === mDom) return { title: '🧩 맞물리는 퍼즐', subtitle: 'PERFECT FIT', icon: '🧩', tags: ['#퍼즐','#보완','#재발견'], desc: '서로의 숨겨진 면이 상대의 중심과 딱 맞물리는 관계', color: '#0891B2', borderColor: '#CFFAFE' };
 
     // ════ P7. 에너지 + Fallback (3개) ════
-    if (avgAmp &gt;= 6 &amp;&amp; avgFreq &gt;= 6) return { title: '⚡ 타오르는 케미', sub: 'BURNING CHEMISTRY', icon: '🔥', tags: ['#케미','#강렬','#자극'], desc: '서로 다른 강렬한 에너지가 만나 뜨거운 케미를 만드는 관계', color: '#DC2626', borderColor: '#FCA5A5' };
-    if (avgAmp &lt;= 4 &amp;&amp; avgFreq &lt;= 4) return { title: '🌿 고요한 깊이', sub: 'QUIET DEPTH', icon: '🍃', tags: ['#평화','#깊이','#내면'], desc: '조용하지만 깊은 내면으로 연결되는 관계', color: '#16A34A', borderColor: '#86EFAC' };
-    return { title: '🌈 다채로운 프리즘', sub: 'COLORFUL PRISM', icon: '🎨', tags: ['#개성','#존중','#새로움'], desc: '서로 다른 색이 만나 아름다운 무지개를 만드는 관계', color: '#8B5CF6', borderColor: '#DDD6FE' };
+    if (avgAmp &gt;= 6 &amp;&amp; avgFreq &gt;= 6) return { title: '⚡ 타오르는 케미', subtitle: 'BURNING CHEMISTRY', icon: '🔥', tags: ['#케미','#강렬','#자극'], desc: '서로 다른 강렬한 에너지가 만나 뜨거운 케미를 만드는 관계', color: '#DC2626', borderColor: '#FCA5A5' };
+    if (avgAmp &lt;= 4 &amp;&amp; avgFreq &lt;= 4) return { title: '🌿 고요한 깊이', subtitle: 'QUIET DEPTH', icon: '🍃', tags: ['#평화','#깊이','#내면'], desc: '조용하지만 깊은 내면으로 연결되는 관계', color: '#16A34A', borderColor: '#86EFAC' };
+    return { title: '🌈 다채로운 프리즘', subtitle: 'COLORFUL PRISM', icon: '🎨', tags: ['#개성','#존중','#새로움'], desc: '서로 다른 색이 만나 아름다운 무지개를 만드는 관계', color: '#8B5CF6', borderColor: '#DDD6FE' };
 }
 </pre>
 
@@ -893,7 +1369,7 @@ function getDominantTrait(axes) {
 // 카드 렌더링
 titleEl.textContent = matchType.title;       // "🪞 영혼의 데칼코마니"
 titleEl.style.color = matchType.color;       // "#6366F1"
-subtitleEl.textContent = matchType.sub;      // "MIRROR IMAGE"
+subtitleEl.textContent = matchType.subtitle;  // "MIRROR IMAGE"
 descEl.textContent = matchType.desc;         // "말하지 않아도 통하는..."
 matchType.tags.forEach(tag =&gt; /* &lt;span class="tag"&gt;#소울메이트&lt;/span&gt; */);
 cardEl.style.borderColor = matchType.borderColor; // "#C7D2FE"</pre>
