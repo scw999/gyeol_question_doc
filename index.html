@@ -45,9 +45,9 @@ tr:nth-child(even) td { background: #f9fafb; }
 <div class="cover">
 <p style="color:var(--accent);font-weight:700;letter-spacing:3px;">결하다 (Gyeolhada)</p>
 <h1 style="border:none;margin-top:8px;">파동 표현 · 매칭 타입 · 결 해석</h1>
-<h1 style="border:none;font-size:1.8rem;margin-top:0;">기술 명세서 v4.0 완전판</h1>
+<h1 style="border:none;font-size:1.8rem;margin-top:0;">기술 명세서 v5.0 완전판</h1>
 <p class="sub">8축 성향 카운트 기반 결과 시각화 시스템 — 전체 디스크립션 포함</p>
-<p style="color:#9ca3b8;margin-top:20px;font-size:0.85rem;">문서 버전: v4.0 | 날짜: 2026.03.13 | 대상: 개발팀</p>
+<p style="color:#9ca3b8;margin-top:20px;font-size:0.85rem;">문서 버전: v5.0 | 날짜: 2026.03.13 | 대상: 개발팀</p>
 </div>
 
 <div class="toc">
@@ -62,6 +62,7 @@ tr:nth-child(even) td { background: #f9fafb; }
 <a href="#sec1-1">&nbsp;&nbsp;1-1. 3축 계산 공식</a>
 <a href="#sec1-2">&nbsp;&nbsp;1-2. 파동 색상 결정</a>
 <a href="#sec1-3">&nbsp;&nbsp;1-3. Canvas 렌더링</a>
+<a href="#sec1-4">&nbsp;&nbsp;1-4. 파동 색상 전략 (v5.0: Big5 그라데이션 + 애착 배지)</a>
 <a href="#sec2">2. 매칭 타입 (Matching Type)</a>
 <a href="#sec2-1">&nbsp;&nbsp;2-1. 28개 매칭 타입 전체 목록</a>
 <a href="#sec2-2">&nbsp;&nbsp;2-2. 완전한 구현 코드 (Copy &amp; Paste Ready)</a>
@@ -879,11 +880,15 @@ pixelFreq = 0.008 + (level - 1) / 9 × 0.027</pre>
 level = clamp(round(raw + 5.5), 1, 10)         // offset = 5.5
 phaseDiff = (mPhaseLevel - fPhaseLevel) × 0.3  // 남녀 위상차</pre>
 
-<h2 id="sec1-2">1-2. 파동 색상 결정</h2>
-<p>각 사용자의 <b>지배적 성향(dominantTrait)</b>에 따라 파동 색상이 결정됩니다.</p>
-<table>
-<tr><th>성향</th><th>주색</th><th>보조색</th><th>색 이름</th><th>의미</th></tr><tr><td><b>개방성</b></td><td><span class="color-dot" style="background:#8B5CF6"></span>#8B5CF6</td><td><span class="color-dot" style="background:#EDE9FE"></span>#EDE9FE</td><td>🟣 보랏빛</td><td>호기심의 색</td></tr><tr><td><b>성실성</b></td><td><span class="color-dot" style="background:#3B82F6"></span>#3B82F6</td><td><span class="color-dot" style="background:#DBEAFE"></span>#DBEAFE</td><td>🔵 푸른빛</td><td>신뢰의 색</td></tr><tr><td><b>외향성</b></td><td><span class="color-dot" style="background:#F97316"></span>#F97316</td><td><span class="color-dot" style="background:#FFEDD5"></span>#FFEDD5</td><td>🟠 주황빛</td><td>활력의 색</td></tr><tr><td><b>우호성</b></td><td><span class="color-dot" style="background:#10B981"></span>#10B981</td><td><span class="color-dot" style="background:#D1FAE5"></span>#D1FAE5</td><td>🟢 초록빛</td><td>배려의 색</td></tr><tr><td><b>정서안정</b></td><td><span class="color-dot" style="background:#06B6D4"></span>#06B6D4</td><td><span class="color-dot" style="background:#CFFAFE"></span>#CFFAFE</td><td>🩵 청록빛</td><td>평온의 색</td></tr><tr><td><b>애착안정</b></td><td><span class="color-dot" style="background:#6366F1"></span>#6366F1</td><td><span class="color-dot" style="background:#E0E7FF"></span>#E0E7FF</td><td>🔵 남빛</td><td>깊은 신뢰의 색</td></tr><tr><td><b>애착불안</b></td><td><span class="color-dot" style="background:#EF4444"></span>#EF4444</td><td><span class="color-dot" style="background:#FEE2E2"></span>#FEE2E2</td><td>🔴 붉은빛</td><td>감수성의 색</td></tr><tr><td><b>애착회피</b></td><td><span class="color-dot" style="background:#64748B"></span>#64748B</td><td><span class="color-dot" style="background:#F1F5F9"></span>#F1F5F9</td><td>⚪ 은빛</td><td>자존의 색</td></tr></table>
-
+<h2 id="sec1-2">1-2. 파동 색상 결정 (v5.0)</h2>
+<p>파동 색상은 <b>Big5 5축에서만</b> 결정됩니다. Z-score 1위(top1)의 주색과 2위(top2)의 보조색으로 그라데이션을 만듭니다.</p>
+<pre>// v5.0: Big5 top1→top2 그라데이션
+const waveColors = getWaveGradientColors(axes);
+// waveColors.primary = top1 주색 (예: #3B82F6 파랑)
+// waveColors.secondary = top2 주색 (예: #10B981 초록)
+// waveColors.light2 = top2 연한색 (예: #D1FAE5)
+// Canvas: gradM.addColorStop(0, light2) → addColorStop(0.5, primary) → addColorStop(1, light2)</pre>
+<p>자세한 20가지 조합표와 애착 배지는 <a href="#sec1-4">Section 1-4</a>를 참조하세요.</p>
 <h2 id="sec1-3">1-3. Canvas 렌더링 의사코드</h2>
 <pre>function animate() {
   ctx.clearRect(0, 0, width, height);
@@ -903,6 +908,209 @@ phaseDiff = (mPhaseLevel - fPhaseLevel) × 0.3  // 남녀 위상차</pre>
   offset += 0.03;  // 애니메이션 속도
   requestAnimationFrame(animate);
 }</pre>
+
+<h2 id="sec1-4">1-4. 파동 색상 전략 (v5.0 변경)</h2>
+
+<div class="note">
+<b>⚠️ v4.0 → v5.0 핵심 변경:</b> 파동 색상이 <b>8축 dominant 1개</b>에서 <b>Big5 top1 + top2 그라데이션</b>으로 변경되었습니다. 애착 유형은 파동 모양에는 반영되지만 색상에서는 분리되어 별도 배지로 표시됩니다.
+</div>
+
+<h3>왜 변경했나?</h3>
+<p>기존 8축 전체에서 dominant를 뽑으면, 애착불안(슬롯=6)이 구조적으로 z-score가 높게 나와 <b>"빨간색이 너무 자주 나오는" 문제</b>가 있었습니다. Big5(성격)와 애착(관계방식)은 심리학적으로 다른 차원이므로 분리하는 것이 학문적으로도 더 정확합니다.</p>
+
+<h3>파동 색상 = Big5 top1 → top2 그라데이션 (20가지)</h3>
+<p>Big5 5축 중 Z-score 1위(top1)의 주색 → 2위(top2)의 보조색으로 그라데이션을 만듭니다.</p>
+
+<table>
+<tr><th>Big5 축</th><th>주색 (primary)</th><th>보조색 (light)</th><th>이모지</th></tr>
+<tr><td><b>개방성</b></td><td style="color:#8B5CF6"><b>#8B5CF6 보라</b></td><td>#EDE9FE</td><td>💜</td></tr>
+<tr><td><b>성실성</b></td><td style="color:#3B82F6"><b>#3B82F6 파랑</b></td><td>#DBEAFE</td><td>💙</td></tr>
+<tr><td><b>외향성</b></td><td style="color:#F97316"><b>#F97316 주황</b></td><td>#FFEDD5</td><td>🧡</td></tr>
+<tr><td><b>우호성</b></td><td style="color:#10B981"><b>#10B981 초록</b></td><td>#D1FAE5</td><td>💚</td></tr>
+<tr><td><b>정서안정</b></td><td style="color:#06B6D4"><b>#06B6D4 청록</b></td><td>#CFFAFE</td><td>🩵</td></tr>
+</table>
+
+<h3>20가지 Big5 조합 고유 색상표 (색채 심리학 기반)</h3>
+<p>각 조합은 <b>색채 심리학(Color Psychology)</b>에 근거한 고유 색상을 가집니다. top1의 심리적 의미에 top2가 뉘앙스를 더합니다.</p>
+
+<table>
+<tr><th>top1</th><th>top2</th><th>색상명</th><th>HEX</th><th>색채 심리학 근거</th></tr>
+<tr><td rowspan="4"><b>💜 개방성</b><br><small>창의·호기심</small></td>
+    <td>성실성</td><td><b>딥 아이리스</b></td><td style="color:#6C5CE7"><b>#6C5CE7</b></td><td>보라(창의) × 파랑(신뢰) — 깊은 통찰과 전략적 사고</td></tr>
+<tr><td>외향성</td><td><b>비비드 마젠타</b></td><td style="color:#D63384"><b>#D63384</b></td><td>보라(창의) × 주황(열정) — 예술적 에너지와 강렬한 표현</td></tr>
+<tr><td>우호성</td><td><b>라벤더</b></td><td style="color:#A78BFA"><b>#A78BFA</b></td><td>보라(창의) × 초록(공감) — 부드러운 상상력, 감성적 호기심</td></tr>
+<tr><td>정서안정</td><td><b>페리윙클</b></td><td style="color:#818CF8"><b>#818CF8</b></td><td>보라(창의) × 청록(평온) — 고요한 깊이, 명상적 탐구</td></tr>
+
+<tr><td rowspan="4"><b>💙 성실성</b><br><small>신뢰·계획</small></td>
+    <td>개방성</td><td><b>로열 블루</b></td><td style="color:#4338CA"><b>#4338CA</b></td><td>파랑(신뢰) × 보라(창의) — 비전 있는 전략적 실행력</td></tr>
+<tr><td>외향성</td><td><b>사파이어</b></td><td style="color:#2563EB"><b>#2563EB</b></td><td>파랑(신뢰) × 주황(활동) — 실행력 있는 리더십</td></tr>
+<tr><td>우호성</td><td><b>오션 블루</b></td><td style="color:#0369A1"><b>#0369A1</b></td><td>파랑(신뢰) × 초록(배려) — 책임감 있는 따뜻한 돌봄</td></tr>
+<tr><td>정서안정</td><td><b>네이비</b></td><td style="color:#1E3A5F"><b>#1E3A5F</b></td><td>파랑(신뢰) × 청록(평온) — 반석처럼 단단한 안정감</td></tr>
+
+<tr><td rowspan="4"><b>🧡 외향성</b><br><small>활력·사교</small></td>
+    <td>개방성</td><td><b>코럴 레드</b></td><td style="color:#F43F5E"><b>#F43F5E</b></td><td>주황(열정) × 보라(창의) — 모험적 에너지, 자유로운 영혼</td></tr>
+<tr><td>성실성</td><td><b>앰버</b></td><td style="color:#EA580C"><b>#EA580C</b></td><td>주황(열정) × 파랑(신뢰) — 따뜻한 추진력과 신뢰</td></tr>
+<tr><td>우호성</td><td><b>피치</b></td><td style="color:#FB923C"><b>#FB923C</b></td><td>주황(열정) × 초록(공감) — 사람을 끌어당기는 따뜻한 매력</td></tr>
+<tr><td>정서안정</td><td><b>골든 브라운</b></td><td style="color:#B45309"><b>#B45309</b></td><td>주황(열정) × 청록(평온) — 안정된 중심에서 빛나는 카리스마</td></tr>
+
+<tr><td rowspan="4"><b>💚 우호성</b><br><small>조화·배려</small></td>
+    <td>개방성</td><td><b>에메랄드</b></td><td style="color:#059669"><b>#059669</b></td><td>초록(조화) × 보라(창의) — 열린 마음으로 공감하는 탐구자</td></tr>
+<tr><td>성실성</td><td><b>포레스트</b></td><td style="color:#166534"><b>#166534</b></td><td>초록(조화) × 파랑(신뢰) — 묵직한 책임감과 따뜻한 배려</td></tr>
+<tr><td>외향성</td><td><b>스프링 그린</b></td><td style="color:#4ADE80"><b>#4ADE80</b></td><td>초록(조화) × 주황(활력) — 밝고 생동감 있는 배려심</td></tr>
+<tr><td>정서안정</td><td><b>틸</b></td><td style="color:#14B8A6"><b>#14B8A6</b></td><td>초록(조화) × 청록(평온) — 갈등 없는 평화로운 관계</td></tr>
+
+<tr><td rowspan="4"><b>🩵 정서안정</b><br><small>평온·균형</small></td>
+    <td>개방성</td><td><b>울트라 바이올렛</b></td><td style="color:#7C3AED"><b>#7C3AED</b></td><td>청록(평온) × 보라(창의) — 고요한 호수에 피어나는 호기심</td></tr>
+<tr><td>성실성</td><td><b>딥 틸</b></td><td style="color:#155E75"><b>#155E75</b></td><td>청록(평온) × 파랑(신뢰) — 흔들림 없는 깊은 신뢰</td></tr>
+<tr><td>외향성</td><td><b>아쿠아</b></td><td style="color:#22D3EE"><b>#22D3EE</b></td><td>청록(평온) × 주황(활력) — 차분한 중심에서 퍼지는 밝은 빛</td></tr>
+<tr><td>우호성</td><td><b>민트</b></td><td style="color:#2DD4BF"><b>#2DD4BF</b></td><td>청록(평온) × 초록(조화) — 가장 편안하고 안정된 관계</td></tr>
+</table>
+
+<div class="note"><b>색채 심리학 원칙:</b> 보라=창의·직관, 파랑=신뢰·안정, 주황=열정·사교, 초록=조화·성장, 청록=평온·균형. top1이 기본 색조를 결정하고 top2가 채도/명도 방향을 조절합니다.</div>
+
+<h3>색채 심리학 상세 근거 (20색)</h3>
+<p>각 색상은 <b>색채 심리학(Color Psychology)</b>의 연구 결과에 근거합니다. 색상이 주는 심리적 인상과 Big5 성격 요인의 의미를 결합했습니다.</p>
+
+<table>
+<tr><th>Big5 축</th><th>심리학적 근거</th></tr>
+<tr><td><b style="color:#8B5CF6">보라 계열 (개방성)</b></td><td>보라/바이올렛은 색채 심리학에서 <b>창의성, 직관, 영성, 신비</b>를 상징합니다. 빛 스펙트럼의 가장 높은 주파수로, 관습에서 벗어나 새로운 것을 탐구하는 개방성과 연결됩니다.</td></tr>
+<tr><td><b style="color:#3B82F6">파랑 계열 (성실성)</b></td><td>파랑은 <b>신뢰, 안정, 충성, 질서</b>를 상징합니다. 하늘과 바다의 색으로 변하지 않는 신뢰감을 주며, 계획적이고 책임감 있는 성실성과 연결됩니다.</td></tr>
+<tr><td><b style="color:#F97316">주황 계열 (외향성)</b></td><td>주황은 <b>열정, 사교성, 활력, 모험</b>을 상징합니다. 따뜻하고 에너지 넘치는 색으로, 사람들과의 교류에서 에너지를 얻는 외향성과 연결됩니다.</td></tr>
+<tr><td><b style="color:#10B981">초록 계열 (우호성)</b></td><td>초록은 <b>조화, 성장, 배려, 균형</b>을 상징합니다. 자연의 색으로 치유와 안정감을 주며, 타인을 배려하고 공감하는 우호성과 연결됩니다.</td></tr>
+<tr><td><b style="color:#06B6D4">청록 계열 (정서안정)</b></td><td>청록(틸)은 <b>평온, 중심, 명료, 균형</b>을 상징합니다. 깊은 바다와 맑은 하늘의 경계색으로, 감정에 흔들리지 않는 정서안정과 연결됩니다.</td></tr>
+</table>
+
+<h4>조합 시 색상 변화 원리</h4>
+<p>top1이 색조(hue)의 기본 방향을 잡고, top2가 채도와 명도를 조절합니다:</p>
+<table>
+<tr><th>top2 영향</th><th>색상 변화</th><th>예시</th></tr>
+<tr><td><b>+개방성(보라)</b></td><td>색조가 보라 쪽으로 이동, 신비롭고 깊어짐</td><td>성실성+개방성 = 로열 블루(#4338CA) — 파랑이 보라 쪽으로</td></tr>
+<tr><td><b>+외향성(주황)</b></td><td>채도가 올라가고 따뜻해짐</td><td>개방성+외향성 = 비비드 마젠타(#D63384) — 보라에 따뜻함 추가</td></tr>
+<tr><td><b>+성실성(파랑)</b></td><td>색이 차분하고 신뢰감 있게 변함</td><td>외향성+성실성 = 앰버(#EA580C) — 주황이 묵직해짐</td></tr>
+<tr><td><b>+우호성(초록)</b></td><td>부드럽고 따뜻한 톤으로 변함</td><td>외향성+우호성 = 피치(#FB923C) — 주황이 부드러워짐</td></tr>
+<tr><td><b>+정서안정(청록)</b></td><td>채도가 내려가고 안정적으로 변함</td><td>성실성+정서안정 = 네이비(#1E3A5F) — 파랑이 깊고 차분해짐</td></tr>
+</table>
+
+<h3>UI 표시 방식</h3>
+<h4>⓪ 리포트 헤더 원형 아래 — 색상 이름 표시</h4>
+<p>리포트 최상단 남녀 원형(profile circle) 아래에 <b>20색 고유 색상명</b>이 각각 표시됩니다.</p>
+<pre>┌───────────────────────────────────────┐
+│         🎐 소리 없는 이끌림 리포트       │
+│                                       │
+│    [●딥틸●]  ≈≈≈≈≈  [●에메랄드●]       │
+│     딥 틸              에메랄드          │ ← 원 아래 색상 이름
+│                                       │
+└───────────────────────────────────────┘
+
+// showResults에서 렌더링
+const mGradC = getWaveGradientColors(data.maleAxes);
+const circleNameM = document.getElementById('circle-color-name-m');
+circleNameM.textContent = mGradC.colorName; // "딥 틸"
+circleNameM.style.color = mGradC.primary;   // "#155E75"</pre>
+
+<h4>① 파동 결과 카드 — 색상 이름 표시</h4>
+<p>파동 애니메이션 아래 개인 결과 카드에 <b>20색 고유 색상명</b>이 색상 점과 함께 표시됩니다.</p>
+<pre>┌─────────────────────────────────────────┐
+│ ♂ 결과 카드                               │
+│ ⛰️ 관계 에너지  7/10                      │
+│ 🎵 감정 리듬    4/10                      │
+│ 🤝 리드/팔로우   6/10                      │
+│ 🎨 대표 색상  ● 사파이어                    │ ← 20색 이름
+│    "파랑(신뢰)과 주황(활동)이 만나            │ ← 색채 심리학 근거
+│     실행력 있는 리더십을 상징해요"            │
+│                                          │
+│ [🎨 사파이어] [💗 섬세한 감성가] [⚡ 에너지높] │ ← 색상태그 + 애착배지
+└─────────────────────────────────────────┘</pre>
+
+<h4>② 관계 스타일 배지</h4>
+<p>색상 태그 옆에 <b>애착 유형 긍정 배지</b>가 함께 표시됩니다.</p>
+<pre>// showResults에서 배지 렌더링
+const tagAttach = document.getElementById('wave-tag-attach-m');
+tagAttach.textContent = `${attachStyle.emoji} ${attachStyle.label}`;
+tagAttach.style.borderColor = attachStyle.color;
+tagAttach.style.color = attachStyle.color;
+// 예: "💗 섬세한 감성가" (border: #EC4899)</pre>
+
+<h4>③ 색채 심리학 근거 표시</h4>
+<p>colorHint 영역에 20색 각각의 색채 심리학 근거가 표시됩니다.</p>
+<pre>// describePersonal 반환값
+{
+    colorName: '사파이어',           // 20색 고유 이름
+    colorHex: '#2563EB',             // 고유 HEX
+    colorHint: '파랑(신뢰)과 주황(활동)이 만나 실행력 있는 리더십을 상징해요.',
+    colorTag: '🎨 사파이어 · 추진력에 전략이 더해져 힘차게 나아가는',
+    attachStyle: { label:'섬세한 감성가', emoji:'💗', desc:'깊이 느끼고 솔직한', color:'#EC4899' }
+}</pre>
+
+<h4>④ 파동 색상 범례 (결과 페이지)</h4>
+<p>결과 페이지의 "결 해석법" 가이드에 20색 중 대표 12색이 2열 그리드로 표시됩니다. 구 8색(보라/파랑/주황/초록/청록/남색/빨강/은색) 범례는 <b>v5.0에서 완전히 교체</b>되었습니다.</p>
+<pre>// 범례에 표시되는 대표 12색
+딥 아이리스(개방+성실)  비비드 마젠타(개방+외향)
+라벤더(개방+우호)      로열 블루(성실+개방)
+사파이어(성실+외향)    네이비(성실+정서)
+코럴 레드(외향+개방)   피치(외향+우호)
+에메랄드(우호+개방)    틸(우호+정서)
+울트라 바이올렛(정서+개방) 민트(정서+우호)
++ "외 8가지 조합 포함 총 20색" 안내</pre>
+
+</table>
+
+<h3>관계 스타일 배지 = 애착 3축 (긍정 라벨)</h3>
+<p>애착 유형은 부정적 라벨("불안", "회피") 대신 긍정적으로 리프레이밍한 배지로 별도 표시합니다.</p>
+<table>
+<tr><th>애착 유형</th><th>배지 라벨</th><th>이모지</th><th>한마디</th><th>색상</th></tr>
+<tr><td>애착안정</td><td><b>든든한 동반자</b></td><td>🤝</td><td>믿고 기다릴 줄 아는</td><td>#6366F1</td></tr>
+<tr><td>애착불안</td><td><b>섬세한 감성가</b></td><td>💗</td><td>깊이 느끼고 솔직한</td><td>#EC4899</td></tr>
+<tr><td>애착회피</td><td><b>독립적인 자유인</b></td><td>🌿</td><td>자기만의 세계가 뚜렷한</td><td>#64748B</td></tr>
+</table>
+
+<h3>유저에게 보이는 결과 예시</h3>
+<pre>"당신의 파동: 💙 파란색 → 💚 초록색 그라데이션"
+"성실한 배려가 묵직하게 흐르는 파동"
+"관계 스타일: 💗 섬세한 감성가 — 깊이 느끼고 솔직한"</pre>
+
+<h3>애착이 반영되는 곳 / 안 되는 곳</h3>
+<table>
+<tr><th>요소</th><th>애착 반영?</th><th>설명</th></tr>
+<tr><td>파동 <b>모양</b> (높이/속도/리드)</td><td style="color:#059669"><b>✅ 반영</b></td><td>3축 공식에 애착 가중치 포함 (불안→주파수↑, 회피→진폭↓)</td></tr>
+<tr><td>파동 <b>색상</b></td><td style="color:#DC2626"><b>❌ Big5만</b></td><td>v5.0 변경: 보라/파랑/주황/초록/청록 그라데이션</td></tr>
+<tr><td><b>관계 스타일 배지</b></td><td style="color:#059669"><b>✅ 전용</b></td><td>든든한 동반자 / 섬세한 감성가 / 독립적인 자유인</td></tr>
+<tr><td><b>매칭 타입</b> 28개</td><td style="color:#059669"><b>✅ 반영</b></td><td>P4(강렬한끌림/안아주는봄/느린듯깊은사이)</td></tr>
+<tr><td><b>결 해석</b> 프로필</td><td style="color:#059669"><b>✅ 반영</b></td><td>커플 애착 조합 해석 유지</td></tr>
+</table>
+
+<h3>구현 코드</h3>
+<pre>// Big5 top1+top2 그라데이션 색상
+function getWaveGradientColors(axes) {
+    const big5 = ['개방성', '성실성', '외향성', '우호성', '정서안정'];
+    let maxZ = -Infinity, secondZ = -Infinity;
+    let top1 = '우호성', top2 = '성실성';
+    big5.forEach(trait =&gt; {
+        const z = ((axes[trait]||0) - AXIS_MEAN[trait]) / AXIS_STD[trait];
+        if (z &gt; maxZ) { secondZ=maxZ; top2=top1; maxZ=z; top1=trait; }
+        else if (z &gt; secondZ) { secondZ=z; top2=trait; }
+    });
+    return { primary: traitColors[top1][0], secondary: traitColors[top2][0],
+             light1: traitColors[top1][1], light2: traitColors[top2][1],
+             top1: top1, top2: top2 };
+}
+
+// 애착 유형 (긍정 라벨)
+function getAttachmentStyle(axes) {
+    const s=axes['애착안정']||0, n=axes['애착불안']||0, v=axes['애착회피']||0;
+    if (s&gt;=n &amp;&amp; s&gt;=v) return { label:'든든한 동반자', emoji:'🤝', desc:'믿고 기다릴 줄 아는' };
+    return n&gt;=v
+        ? { label:'섬세한 감성가', emoji:'💗', desc:'깊이 느끼고 솔직한' }
+        : { label:'독립적인 자유인', emoji:'🌿', desc:'자기만의 세계가 뚜렷한' };
+}
+
+// Canvas 파동 렌더링에서 사용
+const mGrad = getWaveGradientColors(maleAxes);
+const fGrad = getWaveGradientColors(femaleAxes);
+// top1 주색 → top2 연한색 그라데이션
+const mColors = [mGrad.primary, mGrad.light2];
+const fColors = [fGrad.primary, fGrad.light2];</pre>
+
 <h1 id="sec2">2. 매칭 타입 (Matching Type)</h1>
 <p>남녀 두 사람의 8축 카운트를 비교하여 <b>28개 매칭 타입 중 하나</b>를 결정합니다. 우선순위가 높은 조건부터 순차적으로 평가하여 <b>첫 번째 해당하는 타입</b>이 부여됩니다.</p>
 
@@ -1700,8 +1908,8 @@ Step 4) 3축 레벨별 10단계 설명 + 색상 해석 조합</pre>
 <tr><td><b>그 외 모든 조합</b></td><td>서로 다른 매력의 조화</td><td>서로 다른 성향을 가진 두 분이 만났습니다. 서로의 방식을 인정하고 존중한다면, 혼자일 때보다 훨씬 더 넓은 세상을 경험하게 될 것입니다.</td><td>서로의 부족한 점을 완벽하게 보완해줄 수 있습니다.</td><td>상대방을 내 방식대로 바꾸려 하지 않고 있는 그대로 인정하면 더 큰 시너지가 납니다.</td></tr>
 </table>
 
-<h2 id="sec3-8">3-8. 개인 색상 해석 텍스트 (colorDetail / colorHintMap)</h2>
-<p>개인 프로필 카드에서 지배적 성향 색상에 대한 부연 설명으로 사용됩니다. 두 가지 버전이 있습니다.</p>
+<h2 id="sec3-8">3-8. 개인 색상 해석 텍스트 (v5.0: Big5만)</h2>
+<p>개인 프로필 카드에서 파동 색상에 대한 부연 설명으로 사용됩니다. <b>v5.0부터 Big5 5축만 사용</b>합니다. 애착은 관계 스타일 배지로 별도 표시됩니다.</p>
 
 <h3>colorHintMap (짧은 버전 — 파동 색상 태그 옆)</h3>
 <table>
@@ -1812,7 +2020,7 @@ Step 4) 3축 레벨별 10단계 설명 + 색상 해석 조합</pre>
 </table>
 
 <div style="text-align:center;margin:60px 0 40px;padding:30px;border-top:2px solid var(--accent);">
-<p style="color:#9ca3af;font-size:0.85rem;">결하다 기술명세서 v4.0 완전판 — 문서 끝</p>
+<p style="color:#9ca3af;font-size:0.85rem;">결하다 기술명세서 v5.0 완전판 — 문서 끝</p>
 </div>
 
 </div>
