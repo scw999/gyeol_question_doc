@@ -62,7 +62,7 @@ tr:nth-child(even) td { background: #f9fafb; }
 <a href="#sec1-1">&nbsp;&nbsp;1-1. 3축 계산 공식</a>
 <a href="#sec1-2">&nbsp;&nbsp;1-2. 파동 색상 결정</a>
 <a href="#sec1-3">&nbsp;&nbsp;1-3. Canvas 렌더링</a>
-<a href="#sec1-4">&nbsp;&nbsp;1-4. 파동 색상 전략 (v5.0: Big5 그라데이션 + 애착 배지)</a>
+<a href="#sec1-4">&nbsp;&nbsp;1-4. 파동 색상 전략 (v5.0: Big5 20색 + 애착 배지)</a>
 <a href="#sec2">2. 매칭 타입 (Matching Type)</a>
 <a href="#sec2-1">&nbsp;&nbsp;2-1. 28개 매칭 타입 전체 목록</a>
 <a href="#sec2-2">&nbsp;&nbsp;2-2. 완전한 구현 코드 (Copy &amp; Paste Ready)</a>
@@ -1054,6 +1054,36 @@ tagAttach.style.color = attachStyle.color;
 + "외 8가지 조합 포함 총 20색" 안내</pre>
 
 </table>
+
+
+<h3>개발자용 20색 전체 매핑표 (한글 키 ↔ 영문 키)</h3>
+<p>프론트엔드 코드에서 <code>TRAIT_COMBO_COLORS</code>의 키는 영문, 프로토타입(HTML)은 한글을 사용합니다. 아래 표로 1:1 매핑됩니다.</p>
+
+<table>
+<tr><th>#</th><th>한글 키</th><th>영문 키</th><th>colorName</th><th>colorHex</th><th>lightHex</th><th>description</th></tr>
+<tr><td>1</td><td>개방성+성실성</td><td><code>openness+conscientiousness</code></td><td><b style="color:#6C5CE7">딥 아이리스</b></td><td>#6C5CE7</td><td>#DCD6F7</td><td>깊은 통찰력과 전략적 사고를 뜻해요. 창의적인 아이디어를 현실로 만들어내는 사람이에요.</td></tr>
+<tr><td>2</td><td>개방성+외향성</td><td><code>openness+extraversion</code></td><td><b style="color:#D63384">비비드 마젠타</b></td><td>#D63384</td><td>#F7D6E6</td><td>예술적 감각과 강렬한 표현력을 뜻해요. 새로운 경험을 열정적으로 탐험하는 사람이에요.</td></tr>
+<tr><td>3</td><td>개방성+우호성</td><td><code>openness+agreeableness</code></td><td><b style="color:#A78BFA">라벤더</b></td><td>#A78BFA</td><td>#EDE9FE</td><td>부드러운 상상력과 감성적 호기심을 뜻해요. 따뜻한 공감 속에서 새로운 세계를 탐구해요.</td></tr>
+<tr><td>4</td><td>개방성+정서안정</td><td><code>openness+emotional_stability</code></td><td><b style="color:#818CF8">페리윙클</b></td><td>#818CF8</td><td>#E0E7FF</td><td>고요한 깊이와 명상적 탐구를 뜻해요. 흔들림 없이 자신만의 세계를 넓혀가는 사람이에요.</td></tr>
+<tr><td>5</td><td>성실성+개방성</td><td><code>conscientiousness+openness</code></td><td><b style="color:#4338CA">로열 블루</b></td><td>#4338CA</td><td>#C7D2FE</td><td>비전 있는 실행력을 뜻해요. 창의적인 전략을 세우고 끝까지 해내는 사람이에요.</td></tr>
+<tr><td>6</td><td>성실성+외향성</td><td><code>conscientiousness+extraversion</code></td><td><b style="color:#2563EB">사파이어</b></td><td>#2563EB</td><td>#BFDBFE</td><td>실행력 있는 리더십을 뜻해요. 계획을 세우고 사람들과 함께 추진하는 힘이 있어요.</td></tr>
+<tr><td>7</td><td>성실성+우호성</td><td><code>conscientiousness+agreeableness</code></td><td><b style="color:#0369A1">오션 블루</b></td><td>#0369A1</td><td>#BAE6FD</td><td>책임감 있는 따뜻한 돌봄을 뜻해요. 맡은 일을 꼼꼼하게 하면서도 주변을 챙기는 사람이에요.</td></tr>
+<tr><td>8</td><td>성실성+정서안정</td><td><code>conscientiousness+emotional_stability</code></td><td><b style="color:#1E3A5F">네이비</b></td><td>#1E3A5F</td><td>#CBD5E1</td><td>반석 같은 안정감을 뜻해요. 어떤 상황에서도 흔들리지 않는 단단한 신뢰를 주는 사람이에요.</td></tr>
+<tr><td>9</td><td>외향성+개방성</td><td><code>extraversion+openness</code></td><td><b style="color:#F43F5E">코럴 레드</b></td><td>#F43F5E</td><td>#FECDD3</td><td>모험적 에너지와 자유로운 영혼을 뜻해요. 새로운 도전을 두려워하지 않고 즐기는 사람이에요.</td></tr>
+<tr><td>10</td><td>외향성+성실성</td><td><code>extraversion+conscientiousness</code></td><td><b style="color:#EA580C">앰버</b></td><td>#EA580C</td><td>#FED7AA</td><td>따뜻한 추진력과 신뢰를 뜻해요. 밝은 에너지로 앞장서면서도 약속을 잘 지키는 사람이에요.</td></tr>
+<tr><td>11</td><td>외향성+우호성</td><td><code>extraversion+agreeableness</code></td><td><b style="color:#FB923C">피치</b></td><td>#FB923C</td><td>#FFEDD5</td><td>사람을 끌어당기는 따뜻한 매력을 뜻해요. 함께 있으면 기분이 좋아지고 편안해지는 사람이에요.</td></tr>
+<tr><td>12</td><td>외향성+정서안정</td><td><code>extraversion+emotional_stability</code></td><td><b style="color:#B45309">골든 브라운</b></td><td>#B45309</td><td>#FEF3C7</td><td>안정된 중심에서 빛나는 카리스마를 뜻해요. 활발하면서도 차분한 균형감이 매력인 사람이에요.</td></tr>
+<tr><td>13</td><td>우호성+개방성</td><td><code>agreeableness+openness</code></td><td><b style="color:#059669">에메랄드</b></td><td>#059669</td><td>#D1FAE5</td><td>열린 마음의 공감 능력을 뜻해요. 다양한 관점을 받아들이면서 따뜻하게 배려하는 사람이에요.</td></tr>
+<tr><td>14</td><td>우호성+성실성</td><td><code>agreeableness+conscientiousness</code></td><td><b style="color:#166534">포레스트</b></td><td>#166534</td><td>#BBF7D0</td><td>묵직한 책임감과 따뜻한 배려를 뜻해요. 말보다 행동으로 사랑을 표현하는 사람이에요.</td></tr>
+<tr><td>15</td><td>우호성+외향성</td><td><code>agreeableness+extraversion</code></td><td><b style="color:#4ADE80">스프링 그린</b></td><td>#4ADE80</td><td>#DCFCE7</td><td>밝고 생동감 있는 배려심을 뜻해요. 주변 사람들에게 활력과 따뜻함을 동시에 주는 사람이에요.</td></tr>
+<tr><td>16</td><td>우호성+정서안정</td><td><code>agreeableness+emotional_stability</code></td><td><b style="color:#14B8A6">틸</b></td><td>#14B8A6</td><td>#CCFBF1</td><td>갈등 없는 평화로운 관계를 뜻해요. 차분하게 상대를 배려하며 편안한 분위기를 만드는 사람이에요.</td></tr>
+<tr><td>17</td><td>정서안정+개방성</td><td><code>emotional_stability+openness</code></td><td><b style="color:#7C3AED">울트라 바이올렛</b></td><td>#7C3AED</td><td>#DDD6FE</td><td>고요한 호수에 피어나는 호기심을 뜻해요. 평온한 내면에서 깊은 탐구심이 빛나는 사람이에요.</td></tr>
+<tr><td>18</td><td>정서안정+성실성</td><td><code>emotional_stability+conscientiousness</code></td><td><b style="color:#155E75">딥 틸</b></td><td>#155E75</td><td>#CFFAFE</td><td>흔들림 없는 깊은 신뢰를 뜻해요. 감정에 휘둘리지 않고 묵묵히 자리를 지키는 사람이에요.</td></tr>
+<tr><td>19</td><td>정서안정+외향성</td><td><code>emotional_stability+extraversion</code></td><td><b style="color:#22D3EE">아쿠아</b></td><td>#22D3EE</td><td>#D5F5F6</td><td>차분한 중심에서 퍼지는 밝은 빛을 뜻해요. 안정감 있으면서도 밝은 에너지를 가진 사람이에요.</td></tr>
+<tr><td>20</td><td>정서안정+우호성</td><td><code>emotional_stability+agreeableness</code></td><td><b style="color:#2DD4BF">민트</b></td><td>#2DD4BF</td><td>#D5F5F6</td><td>가장 편안하고 안정된 관계를 뜻해요. 함께 있으면 마음이 놓이고 자연스럽게 편해지는 사람이에요.</td></tr>
+</table>
+
+<div class="note"><b>키 사용법:</b> 프로토타입(HTML)에서는 <code>traitComboColors['개방성+성실성']</code>, 앱(TypeScript)에서는 <code>TRAIT_COMBO_COLORS['openness+conscientiousness']</code>로 접근합니다. 순서가 중요합니다 — <code>top1+top2</code>와 <code>top2+top1</code>은 다른 색상입니다.</div>
 
 <h3>관계 스타일 배지 = 애착 3축 (긍정 라벨)</h3>
 <p>애착 유형은 부정적 라벨("불안", "회피") 대신 긍정적으로 리프레이밍한 배지로 별도 표시합니다.</p>
